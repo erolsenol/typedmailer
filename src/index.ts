@@ -42,7 +42,11 @@ const providerOptions = {
 } as const;
 
 export type MailerOptions =
-  z.input<typeof providerOptions.resend> | z.input<typeof providerOptions.brevo> | z.input<typeof providerOptions.smtp>;
+  | z.input<typeof providerOptions.resend>
+  | z.input<typeof providerOptions.brevo>
+  | z.input<typeof providerOptions.postmark>
+  | z.input<typeof providerOptions.sendgrid>
+  | z.input<typeof providerOptions.smtp>;
 
 async function loadProvider(
   options: z.output<(typeof providerOptions)[keyof typeof providerOptions]>,

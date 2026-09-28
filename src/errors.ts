@@ -20,9 +20,11 @@ export function normalizeProviderError(error: unknown, provider: string): MailEr
   const status =
     typeof candidate?.statusCode === 'number'
       ? candidate.statusCode
-      : typeof (error as { responseCode?: unknown } | null)?.responseCode === 'number'
-        ? (error as { responseCode: number }).responseCode
-        : undefined;
+      : typeof candidate?.code === 'number'
+        ? candidate.code
+        : typeof (error as { responseCode?: unknown } | null)?.responseCode === 'number'
+          ? (error as { responseCode: number }).responseCode
+          : undefined;
   const code = typeof candidate?.code === 'string' ? candidate.code : undefined;
   const safeMessage =
     status === 401 || status === 403

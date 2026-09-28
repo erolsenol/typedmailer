@@ -27,6 +27,10 @@ npm install typedmailer resend
 npm install typedmailer @getbrevo/brevo
 # or
 npm install typedmailer nodemailer
+# or
+npm install typedmailer postmark
+# or
+npm install typedmailer @sendgrid/mail
 ```
 
 Requires Node.js 22 or newer. Provider SDKs are optional peers and are loaded only when their adapter is selected.
@@ -61,6 +65,8 @@ TypedMailer supports these email providers through the same `createMailer` and `
 
 - **Resend** for API-based email delivery.
 - **Brevo** for API-based email delivery.
+- **Postmark** for API-based email delivery.
+- **SendGrid** for API-based email delivery.
 - **SMTP** for compatible SMTP services and local development servers such as Mailpit.
 
 ### Brevo
@@ -70,6 +76,28 @@ const mailer = createMailer({
   provider: 'brevo',
   apiKey: process.env.BREVO_API_KEY!,
   from: { email: 'hello@example.com', name: 'Example App' },
+});
+```
+
+### Postmark
+
+Use your Postmark server token as `apiKey`:
+
+```ts
+const mailer = createMailer({
+  provider: 'postmark',
+  apiKey: process.env.POSTMARK_SERVER_TOKEN!,
+  from: 'Example App <noreply@example.com>',
+});
+```
+
+### SendGrid
+
+```ts
+const mailer = createMailer({
+  provider: 'sendgrid',
+  apiKey: process.env.SENDGRID_API_KEY!,
+  from: 'Example App <noreply@example.com>',
 });
 ```
 
@@ -91,7 +119,9 @@ For local development, start Mailpit with `docker run --rm -p 1025:1025 -p 8025:
 
 ## Message options
 
-`to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend and SMTP.
+`to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend, Postmark, SendGrid, and SMTP.
+
+Provider capabilities differ. Postmark and SendGrid do not support `idempotencyKey`; unsupported fields return a `MailError` with code `unsupported` instead of being silently ignored.
 
 ```ts
 await mailer.send({

@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { MailService } from '@sendgrid/mail';
+import { MailService, type MailDataRequired } from '@sendgrid/mail';
 import { addressWithName } from '../config.js';
 import { MailError, normalizeProviderError } from '../errors.js';
 import type { MailProvider, NormalizedMailInput } from '../types.js';
@@ -20,17 +20,26 @@ export function createSendGridProvider(options: { apiKey: string }): MailProvide
           );
         }
 
-        const [response] = await client.send({
+        const content =
+          input.text !== undefined
+            ? { text: input.text, ...(input.html !== undefined ? { html: input.html } : {}) }
+            : input.html !== undefined
+              ? { html: input.html }
+              : undefined;
+        if (!content) {
+          throw new MailError('Provide text or HTML content.', 'configuration', 'sendgrid', false);
+        }
+
+        const payload: MailDataRequired = {
           from: addressWithName(input.from),
           to: input.to.map(addressWithName),
           subject: input.subject,
-          ...(input.text !== undefined ? { text: input.text } : {}),
-          ...(input.html !== undefined ? { html: input.html } : {}),
+          ...content,
           ...(input.replyTo ? { replyTo: addressWithName(input.replyTo) } : {}),
           ...(input.cc ? { cc: input.cc.map(addressWithName) } : {}),
           ...(input.bcc ? { bcc: input.bcc.map(addressWithName) } : {}),
-          ...(input.headers ? { headers: input.headers } : {}),
-          ...(input.metadata ? { customArgs: input.metadata } : {}),
+          ...(input.headers ? { headers: { ...input.headers } } : {}),
+          ...(input.metadata ? { customArgs: { ...input.metadata } } : {}),
           ...(input.attachments
             ? {
                 attachments: input.attachments.map((attachment) => ({
@@ -41,7 +50,8 @@ export function createSendGridProvider(options: { apiKey: string }): MailProvide
                 })),
               }
             : {}),
-        });
+        };
+        const [response] = await client.send(payload);
 
         const messageId = getHeader(response.headers, 'x-message-id');
         if (!messageId) {

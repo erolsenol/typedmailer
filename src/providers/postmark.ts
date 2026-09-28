@@ -38,7 +38,7 @@ export function createPostmarkProvider(options: { apiKey: string }): MailProvide
                   Name: attachment.filename,
                   Content: Buffer.from(attachment.content).toString('base64'),
                   ContentType: attachment.contentType ?? 'application/octet-stream',
-                  ...(attachment.contentId ? { ContentID: attachment.contentId } : {}),
+                  ContentID: attachment.contentId ?? null,
                 })),
               }
             : {}),
