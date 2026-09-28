@@ -29,7 +29,12 @@ export function createSmtpProvider(options: SmtpOptions): MailProvider {
     async send(input: NormalizedMailInput) {
       try {
         if (input.idempotencyKey || input.metadata) {
-          throw new MailError('SMTP does not support idempotency keys or provider metadata.', 'unsupported', 'smtp', false);
+          throw new MailError(
+            'SMTP does not support idempotency keys or provider metadata.',
+            'unsupported',
+            'smtp',
+            false,
+          );
         }
         const result = await (transport.sendMail({
           from: input.from,
@@ -42,12 +47,17 @@ export function createSmtpProvider(options: SmtpOptions): MailProvider {
           ...(input.cc ? { cc: [...input.cc] } : {}),
           ...(input.bcc ? { bcc: [...input.bcc] } : {}),
           ...(input.headers ? { headers: input.headers } : {}),
-          ...(input.attachments ? { attachments: input.attachments.map((attachment) => ({
-            filename: attachment.filename,
-            content: typeof attachment.content === 'string' ? attachment.content : Buffer.from(attachment.content),
-            ...(attachment.contentType ? { contentType: attachment.contentType } : {}),
-            ...(attachment.contentId ? { cid: attachment.contentId } : {}),
-          })) } : {}),
+          ...(input.attachments
+            ? {
+                attachments: input.attachments.map((attachment) => ({
+                  filename: attachment.filename,
+                  content:
+                    typeof attachment.content === 'string' ? attachment.content : Buffer.from(attachment.content),
+                  ...(attachment.contentType ? { contentType: attachment.contentType } : {}),
+                  ...(attachment.contentId ? { cid: attachment.contentId } : {}),
+                })),
+              }
+            : {}),
         }) as Promise<{ messageId?: string }>);
         if (!result.messageId) throw new MailError('SMTP returned no message identifier.', 'provider', 'smtp', false);
         return { messageId: result.messageId };

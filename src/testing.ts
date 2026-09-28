@@ -14,7 +14,9 @@ export function createTestMailer(options: { from: NonNullable<SendMailInput['fro
   const sent: CapturedMail[] = [];
   return {
     sent,
-    clear() { sent.length = 0; },
+    clear() {
+      sent.length = 0;
+    },
     async send(input): Promise<SendMailResult> {
       const message = { ...input, from: input.from ?? options.from };
       sent.push(message);

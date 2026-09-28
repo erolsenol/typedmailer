@@ -124,6 +124,8 @@ Provider and transport failures are normalized as `MailError`, with `code`, `pro
 
 Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for development and contribution guidelines.
 
+After cloning, run `npm ci` to install dependencies and enable the local Git hooks. Commits run staged-file lint and format checks plus unit tests. Pushes run the full `npm run check` quality gate; GitHub Actions runs the same gate on Node.js 22 and 24.
+
 ## Türkçe kısa başlangıç
 
 TypedMailer, Node.js sunucu uygulamalarında Resend, Brevo veya SMTP üzerinden e-posta göndermek için ortak ve tip güvenli bir API sunar. Şablonlar, kuyruk ve tekrar deneme politikaları uygulamanızda kalır. Kurulumda kullanacağınız sağlayıcının SDK'sını TypedMailer ile birlikte yükleyin. API anahtarlarını yalnızca sunucu ortamında tutun.

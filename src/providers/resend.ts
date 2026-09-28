@@ -14,7 +14,12 @@ export function createResendProvider(options: { apiKey: string }): MailProvider 
   return {
     async send(input: NormalizedMailInput) {
       if (input.messageId) {
-        throw new MailError('Custom message IDs are only supported by the SMTP adapter.', 'unsupported', 'resend', false);
+        throw new MailError(
+          'Custom message IDs are only supported by the SMTP adapter.',
+          'unsupported',
+          'resend',
+          false,
+        );
       }
       const payload = {
         from: formatFrom(input.from),
@@ -26,12 +31,16 @@ export function createResendProvider(options: { apiKey: string }): MailProvider 
         ...(input.cc ? { cc: input.cc.map(emailOf) } : {}),
         ...(input.bcc ? { bcc: input.bcc.map(emailOf) } : {}),
         ...(input.headers ? { headers: input.headers } : {}),
-        ...(input.attachments ? { attachments: input.attachments.map((attachment) => ({
-          filename: attachment.filename,
-          content: typeof attachment.content === 'string' ? attachment.content : Buffer.from(attachment.content),
-          ...(attachment.contentType ? { contentType: attachment.contentType } : {}),
-          ...(attachment.contentId ? { contentId: attachment.contentId } : {}),
-        })) } : {}),
+        ...(input.attachments
+          ? {
+              attachments: input.attachments.map((attachment) => ({
+                filename: attachment.filename,
+                content: typeof attachment.content === 'string' ? attachment.content : Buffer.from(attachment.content),
+                ...(attachment.contentType ? { contentType: attachment.contentType } : {}),
+                ...(attachment.contentId ? { contentId: attachment.contentId } : {}),
+              })),
+            }
+          : {}),
         ...(input.metadata ? { tags: Object.entries(input.metadata).map(([name, value]) => ({ name, value })) } : {}),
       };
       const options = input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined;
@@ -45,7 +54,12 @@ export function createResendProvider(options: { apiKey: string }): MailProvider 
     },
     async verifyConnection() {
       // Resend does not expose a side-effect-free credential check in its SDK.
-      throw new MailError('Resend does not support connection verification. Send a provider test message instead.', 'unsupported', 'resend', false);
+      throw new MailError(
+        'Resend does not support connection verification. Send a provider test message instead.',
+        'unsupported',
+        'resend',
+        false,
+      );
     },
     async close() {},
   };

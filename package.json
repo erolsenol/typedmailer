@@ -4,41 +4,99 @@
   "description": "One typed TypeScript API for sending Node.js email with Resend, Brevo, or SMTP.",
   "license": "MIT",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./testing": { "types": "./dist/testing.d.ts", "import": "./dist/testing.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
+    },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "assets/typedmailer-mark.svg", "README.md", "LICENSE", "SECURITY.md", "CODE_OF_CONDUCT.md"],
+  "files": [
+    "dist",
+    "assets/typedmailer-mark.svg",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CODE_OF_CONDUCT.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepare": "npm run build"
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "pack:check": "npm pack --dry-run",
+    "check": "npm run lint && npm run format:check && npm run test && npm run typecheck && npm run build && npm run pack:check",
+    "prepare": "npm run build && husky",
+    "lint-staged": {
+      "*.ts": [
+        "eslint",
+        "prettier --check"
+      ],
+      "*.{json,md,yml,yaml,js,mjs,cjs}": [
+        "prettier --check"
+      ]
+    }
   },
-  "dependencies": { "zod": "^4.6.5" },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
   "peerDependencies": {
     "@getbrevo/brevo": ">=6 <7",
     "nodemailer": ">=7 <11",
     "resend": ">=6 <7"
   },
   "peerDependenciesMeta": {
-    "@getbrevo/brevo": { "optional": true },
-    "nodemailer": { "optional": true },
-    "resend": { "optional": true }
+    "@getbrevo/brevo": {
+      "optional": true
+    },
+    "nodemailer": {
+      "optional": true
+    },
+    "resend": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@getbrevo/brevo": "^6.0.3",
     "@types/node": "^24.5.2",
     "@types/nodemailer": "^7.0.1",
+    "eslint": "^10.11.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
     "nodemailer": "^10.0.12",
+    "prettier": "^3.9.9",
     "resend": "^6.30.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.2"
   },
-  "repository": { "type": "git", "url": "https://github.com/erolsenol/typedmailer.git" },
-  "bugs": { "url": "https://github.com/erolsenol/typedmailer/issues" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erolsenol/typedmailer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/erolsenol/typedmailer/issues"
+  },
   "homepage": "https://github.com/erolsenol/typedmailer#readme",
-  "keywords": ["email", "mail", "nodejs", "typescript", "transactional-email", "email-sending", "resend", "brevo", "smtp"]
+  "keywords": [
+    "email",
+    "mail",
+    "nodejs",
+    "typescript",
+    "transactional-email",
+    "email-sending",
+    "resend",
+    "brevo",
+    "smtp"
+  ]
 }
