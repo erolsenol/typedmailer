@@ -2,7 +2,7 @@
   <img src="assets/typedmailer-mark.svg" alt="TypedMailer" width="72" height="72" />
 </p>
 
-<h1 align="center">TypedMailer</h1>
+<h1 align="center">TypedMailer: TypeScript Email Sending for Node.js</h1>
 
 <p align="center"><strong>One typed API for sending Node.js email with Resend, Brevo, or SMTP.</strong></p>
 
@@ -13,11 +13,13 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license" /></a>
 </p>
 
-TypedMailer gives server-side Node.js applications one small, type-safe interface for sending email through Resend, Brevo, or SMTP. Your application keeps ownership of templates, queues, retries, and business rules.
+TypedMailer is a type-safe email library for Node.js and TypeScript applications. It gives server-side code one API for sending transactional email with Resend, Brevo, or SMTP. Your application keeps ownership of templates, queues, retries, and business rules.
+
+Use TypedMailer when you want to switch email providers without coupling application code to a provider SDK. Provider SDKs are optional peer dependencies, and only the selected adapter is loaded.
 
 ## Install
 
-Install TypedMailer and the adapter you plan to use:
+Install the `typedmailer` npm package with the provider SDK you plan to use:
 
 ```sh
 npm install typedmailer resend
@@ -28,6 +30,8 @@ npm install typedmailer nodemailer
 ```
 
 Requires Node.js 22 or newer. Provider SDKs are optional peers and are loaded only when their adapter is selected.
+
+TypedMailer is for trusted server-side Node.js runtimes. It is not intended for browser or mobile client bundles.
 
 ## Quick start
 
@@ -52,6 +56,12 @@ await mailer.close();
 ```
 
 ## Providers
+
+TypedMailer supports these email providers through the same `createMailer` and `send` API:
+
+- **Resend** for API-based email delivery.
+- **Brevo** for API-based email delivery.
+- **SMTP** for compatible SMTP services and local development servers such as Mailpit.
 
 ### Brevo
 

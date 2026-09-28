@@ -1,7 +1,8 @@
 {
   "name": "typedmailer",
   "version": "0.1.0",
-  "description": "One typed TypeScript API for sending Node.js email with Resend, Brevo, or SMTP.",
+  "description": "A type-safe Node.js email library with one API for Resend, Brevo, and SMTP.",
+  "author": "Erol Senol",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -36,16 +37,16 @@
     "test": "vitest run",
     "pack:check": "npm pack --dry-run",
     "check": "npm run lint && npm run format:check && npm run test && npm run typecheck && npm run build && npm run pack:check",
-    "prepare": "npm run build && husky",
-    "lint-staged": {
-      "*.ts": [
-        "eslint",
-        "prettier --check"
-      ],
-      "*.{json,md,yml,yaml,js,mjs,cjs}": [
-        "prettier --check"
-      ]
-    }
+    "prepare": "npm run build && husky"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint",
+      "prettier --check"
+    ],
+    "*.{json,md,yml,yaml,js,mjs,cjs}": [
+      "prettier --check"
+    ]
   },
   "dependencies": {
     "zod": "^4.6.5"
@@ -90,13 +91,18 @@
   "homepage": "https://github.com/erolsenol/typedmailer#readme",
   "keywords": [
     "email",
-    "mail",
-    "nodejs",
-    "typescript",
-    "transactional-email",
+    "email-client",
+    "email-library",
+    "email-provider",
     "email-sending",
+    "mailer",
+    "mail",
+    "node",
+    "typescript",
+    "type-safe",
+    "transactional-email",
+    "smtp",
     "resend",
-    "brevo",
-    "smtp"
+    "brevo"
   ]
 }
