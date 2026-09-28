@@ -1,7 +1,7 @@
 {
-  "name": "@erolsenol/mailbridge",
+  "name": "typedpost",
   "version": "0.1.0",
-  "description": "A small, typed email sending interface for Node.js with Resend, Brevo, and SMTP adapters.",
+  "description": "One typed TypeScript API for sending Node.js email with Resend, Brevo, or SMTP.",
   "license": "MIT",
   "type": "module",
   "engines": { "node": ">=22" },
@@ -12,7 +12,7 @@
     "./testing": { "types": "./dist/testing.d.ts", "import": "./dist/testing.js" },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md", "LICENSE", "SECURITY.md", "CODE_OF_CONDUCT.md"],
+  "files": ["dist", "assets/typedpost-mark.svg", "README.md", "LICENSE", "SECURITY.md", "CODE_OF_CONDUCT.md"],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -37,9 +37,8 @@
     "resend": "^6.30.0",
     "typescript": "^5.9.2"
   },
-  "publishConfig": { "access": "public" },
-  "repository": { "type": "git", "url": "https://github.com/erolsenol/mailbridge.git" },
-  "bugs": { "url": "https://github.com/erolsenol/mailbridge/issues" },
-  "homepage": "https://github.com/erolsenol/mailbridge#readme",
-  "keywords": ["email", "mail", "nodejs", "typescript", "resend", "brevo", "smtp"]
+  "repository": { "type": "git", "url": "https://github.com/erolsenol/typedpost.git" },
+  "bugs": { "url": "https://github.com/erolsenol/typedpost/issues" },
+  "homepage": "https://github.com/erolsenol/typedpost#readme",
+  "keywords": ["email", "mail", "nodejs", "typescript", "transactional-email", "email-sending", "resend", "brevo", "smtp"]
 }
