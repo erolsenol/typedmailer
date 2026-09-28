@@ -189,6 +189,8 @@ await mailer.send({ to: 'person@example.test', subject: 'Hello', text: 'Hi' });
 console.log(mailer.sent[0]);
 ```
 
+Messages captured by `createTestMailer` return `provider: 'test'` so test results are not mistaken for SMTP deliveries.
+
 ## Errors and delivery
 
 Provider and transport failures are normalized as `MailError`, with `code`, `provider`, and `retryable` fields. A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Delivery, bounce, and complaint events require provider webhooks and are outside this package's current scope.

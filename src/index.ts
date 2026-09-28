@@ -1,14 +1,7 @@
 import { z } from 'zod';
 import { MailError, normalizeProviderError } from './errors.js';
 import { mailInputSchema, normalizeAddresses } from './config.js';
-import type {
-  Mailer,
-  MailProvider,
-  NormalizedMailInput,
-  ProviderName,
-  SendMailInput,
-  SendMailResult,
-} from './types.js';
+import type { Mailer, MailProvider, NormalizedMailInput, SendMailInput, SendMailResult } from './types.js';
 
 const baseOptions = z.object({
   from: z.union([
@@ -179,7 +172,7 @@ export function createMailer(input: MailerOptions): Mailer {
       try {
         const result = await (await getProvider()).send(normalized);
         return {
-          provider: parsedOptions.provider as ProviderName,
+          provider: parsedOptions.provider,
           messageId: result.messageId,
           acceptedAt: new Date(),
         };

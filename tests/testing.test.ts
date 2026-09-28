@@ -13,7 +13,7 @@ describe('createTestMailer', () => {
       subject: 'Hello',
       text: 'Test',
     });
-    expect(result.provider).toBe('smtp');
+    expect(result.provider).toBe('test');
     expect(result.messageId).toBe('test-1');
     expect(result.acceptedAt).toBeInstanceOf(Date);
   });

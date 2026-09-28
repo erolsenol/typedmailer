@@ -20,7 +20,7 @@ export function createTestMailer(options: { from: NonNullable<SendMailInput['fro
     async send(input): Promise<SendMailResult> {
       const message = { ...input, from: input.from ?? options.from };
       sent.push(message);
-      return { provider: 'smtp', messageId: `test-${sent.length}`, acceptedAt: new Date() };
+      return { provider: 'test', messageId: `test-${sent.length}`, acceptedAt: new Date() };
     },
     async verifyConnection() {},
     async close() {},
