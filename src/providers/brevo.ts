@@ -9,6 +9,9 @@ export function createBrevoProvider(options: { apiKey: string }): MailProvider {
   return {
     async send(input: NormalizedMailInput) {
       try {
+        if (input.messageId) {
+          throw new MailError('Custom message IDs are only supported by the SMTP adapter.', 'unsupported', 'brevo', false);
+        }
         if (input.idempotencyKey) {
           throw new MailError('Brevo idempotency keys are not supported by this adapter.', 'unsupported', 'brevo', false);
         }

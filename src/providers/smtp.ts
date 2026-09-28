@@ -35,6 +35,7 @@ export function createSmtpProvider(options: SmtpOptions): MailProvider {
           from: input.from,
           to: [...input.to],
           subject: input.subject,
+          ...(input.messageId ? { messageId: input.messageId } : {}),
           ...(input.text !== undefined ? { text: input.text } : {}),
           ...(input.html !== undefined ? { html: input.html } : {}),
           ...(input.replyTo ? { replyTo: input.replyTo } : {}),

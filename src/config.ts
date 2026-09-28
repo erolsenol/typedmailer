@@ -14,6 +14,7 @@ export const mailInputSchema = z.object({
   from: senderSchema.optional(),
   to: z.union([addressSchema, z.array(addressSchema).min(1)]),
   subject: z.string().min(1),
+  messageId: z.string().min(1).optional(),
   text: z.string().optional(),
   html: z.string().optional(),
   replyTo: addressSchema.optional(),

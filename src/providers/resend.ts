@@ -13,6 +13,9 @@ export function createResendProvider(options: { apiKey: string }): MailProvider 
   };
   return {
     async send(input: NormalizedMailInput) {
+      if (input.messageId) {
+        throw new MailError('Custom message IDs are only supported by the SMTP adapter.', 'unsupported', 'resend', false);
+      }
       const payload = {
         from: formatFrom(input.from),
         to: input.to.map(emailOf),

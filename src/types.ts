@@ -11,6 +11,7 @@ export interface SendMailInput {
   readonly from?: MailAddress;
   readonly to: MailAddress | readonly MailAddress[];
   readonly subject: string;
+  readonly messageId?: string;
   readonly text?: string;
   readonly html?: string;
   readonly replyTo?: MailAddress;

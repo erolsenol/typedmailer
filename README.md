@@ -72,7 +72,7 @@ Start Mailpit with `docker run --rm -p 1025:1025 -p 8025:8025 axllent/mailpit`. 
 
 ## Sending options
 
-`to` accepts an email string, a `{ email, name }` object, or an array. `text` or `html` is required. Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`. Attachments may include `contentId` for inline images with Resend and SMTP.
+`to` accepts an email string, a `{ email, name }` object, or an array. `text` or `html` is required. Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, `idempotencyKey`, and SMTP-only `messageId`. Attachments may include `contentId` for inline images with Resend and SMTP.
 
 ```ts
 await mailer.send({

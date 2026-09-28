@@ -87,6 +87,7 @@ export function createMailer(input: MailerOptions): Mailer {
         from: (parsed.from ?? parsedOptions.from) as NormalizedMailInput['from'],
         to: (normalizeAddresses(parsed.to) ?? []) as NormalizedMailInput['to'],
         subject: parsed.subject,
+        ...(parsed.messageId ? { messageId: parsed.messageId } : {}),
         ...(parsed.text !== undefined ? { text: parsed.text } : {}),
         ...(parsed.html !== undefined ? { html: parsed.html } : {}),
         ...(parsed.headers ? { headers: parsed.headers } : {}),
