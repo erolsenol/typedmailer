@@ -23,6 +23,13 @@ const providerOptions = {
   brevo: baseOptions.extend({ provider: z.literal('brevo'), apiKey: z.string().min(1) }),
   postmark: baseOptions.extend({ provider: z.literal('postmark'), apiKey: z.string().min(1) }),
   sendgrid: baseOptions.extend({ provider: z.literal('sendgrid'), apiKey: z.string().min(1) }),
+  mailgun: baseOptions.extend({
+    provider: z.literal('mailgun'),
+    apiKey: z.string().min(1),
+    domain: z.string().min(1),
+    region: z.enum(['us', 'eu']).default('us'),
+  }),
+  ses: baseOptions.extend({ provider: z.literal('ses'), region: z.string().min(1) }),
   smtp: baseOptions
     .extend({
       provider: z.literal('smtp'),
@@ -46,6 +53,8 @@ export type MailerOptions =
   | z.input<typeof providerOptions.brevo>
   | z.input<typeof providerOptions.postmark>
   | z.input<typeof providerOptions.sendgrid>
+  | z.input<typeof providerOptions.mailgun>
+  | z.input<typeof providerOptions.ses>
   | z.input<typeof providerOptions.smtp>;
 
 async function loadProvider(
@@ -69,6 +78,14 @@ async function loadProvider(
         const { createSendGridProvider } = await import('./providers/sendgrid.js');
         return createSendGridProvider(options);
       }
+      case 'mailgun': {
+        const { createMailgunProvider } = await import('./providers/mailgun.js');
+        return createMailgunProvider(options);
+      }
+      case 'ses': {
+        const { createSesProvider } = await import('./providers/ses.js');
+        return createSesProvider(options);
+      }
       case 'smtp': {
         const { createSmtpProvider } = await import('./providers/smtp.js');
         return createSmtpProvider({
@@ -88,9 +105,11 @@ async function loadProvider(
     if (moduleNotFound?.code === 'ERR_MODULE_NOT_FOUND') {
       const dependencies = {
         brevo: '@getbrevo/brevo',
+        mailgun: 'mailgun.js and form-data',
         postmark: 'postmark',
         resend: 'resend',
         sendgrid: '@sendgrid/mail',
+        ses: '@aws-sdk/client-sesv2',
         smtp: 'nodemailer',
       } as const;
       const dependency = dependencies[options.provider];
@@ -115,6 +134,8 @@ export function createMailer(input: MailerOptions): Mailer {
       providerOptions.brevo,
       providerOptions.postmark,
       providerOptions.sendgrid,
+      providerOptions.mailgun,
+      providerOptions.ses,
       providerOptions.smtp,
     ])
     .parse(input);

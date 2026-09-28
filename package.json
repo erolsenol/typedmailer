@@ -52,17 +52,29 @@
     "zod": "^4.6.5"
   },
   "peerDependencies": {
+    "@aws-sdk/client-sesv2": ">=3 <4",
     "@getbrevo/brevo": ">=6 <7",
     "@sendgrid/mail": ">=8 <9",
+    "form-data": ">=4 <5",
+    "mailgun.js": ">=14 <15",
     "nodemailer": ">=7 <11",
     "postmark": ">=5 <6",
     "resend": ">=6 <7"
   },
   "peerDependenciesMeta": {
+    "@aws-sdk/client-sesv2": {
+      "optional": true
+    },
     "@getbrevo/brevo": {
       "optional": true
     },
     "@sendgrid/mail": {
+      "optional": true
+    },
+    "form-data": {
+      "optional": true
+    },
+    "mailgun.js": {
       "optional": true
     },
     "nodemailer": {
@@ -76,13 +88,16 @@
     }
   },
   "devDependencies": {
+    "@aws-sdk/client-sesv2": "^3.1141.0",
     "@getbrevo/brevo": "^6.0.3",
     "@sendgrid/mail": "^8.1.6",
     "@types/node": "^24.5.2",
     "@types/nodemailer": "^7.0.1",
     "eslint": "^10.11.0",
+    "form-data": "^4.0.6",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
+    "mailgun.js": "^14.0.1",
     "nodemailer": "^10.0.12",
     "postmark": "^5.1.0",
     "prettier": "^3.9.9",
