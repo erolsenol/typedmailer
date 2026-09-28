@@ -38,4 +38,13 @@ describe('createTestMailer', () => {
     });
     await expect(mailer.verifyConnection()).rejects.toMatchObject({ code: 'configuration', provider: 'test' });
   });
+
+  it('uses the same message validation as the provider mailer', async () => {
+    const mailer = createTestMailer({ from: 'sender@example.com' });
+
+    await expect(mailer.send({ to: [], subject: 'Hello', text: 'Hi' })).rejects.toThrow();
+    await expect(mailer.send({ to: 'reader@example.com', subject: '  ', text: 'Hi' })).rejects.toThrow();
+    await expect(mailer.send({ to: 'not-an-email', subject: 'Hello', text: 'Hi' })).rejects.toThrow();
+    expect(mailer.sent).toEqual([]);
+  });
 });

@@ -26,6 +26,29 @@ jobs:
       - name: Run tests, type checks, examples, build, and packed consumer checks
         run: npm run check
 
+  provider-peer-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install minimum supported provider SDK versions
+        run: >-
+          npm install --no-save --ignore-scripts --no-audit --no-fund
+          @aws-sdk/client-sesv2@3.0.0
+          @getbrevo/brevo@6.0.1
+          @sendgrid/mail@8.0.0
+          form-data@4.0.0
+          mailgun.js@14.0.0
+          nodemailer@7.0.0
+          postmark@5.0.0
+          resend@6.0.0
+      - name: Verify minimum SDK compatibility
+        run: npm run typecheck && npm test && npm run build
+
   supply-chain:
     runs-on: ubuntu-latest
     steps:

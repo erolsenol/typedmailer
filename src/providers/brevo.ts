@@ -55,7 +55,11 @@ export function createBrevoProvider(options: { apiKey: string }): MailProvider {
               }
             : {}),
         });
-        if (!result.messageId) throw new MailError('Brevo accepted no message identifier.', 'provider', 'brevo', false);
+        if (!result.messageId) {
+          throw new MailError('Brevo accepted no message identifier.', 'provider', 'brevo', false, {
+            deliveryUnknown: true,
+          });
+        }
         return { messageId: result.messageId };
       } catch (error) {
         throw normalizeProviderError(error, 'brevo');

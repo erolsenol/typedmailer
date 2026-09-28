@@ -197,7 +197,7 @@ export function createMailer(input: MailerOptions): Mailer {
           acceptedAt: new Date(),
         };
       } catch (error) {
-        throw normalizeProviderError(error, parsedOptions.provider);
+        throw normalizeProviderError(error, parsedOptions.provider, 'send');
       }
     },
     async verifyConnection(): Promise<void> {
@@ -224,7 +224,7 @@ export function createMailer(input: MailerOptions): Mailer {
 }
 
 export { MailError } from './errors.js';
-export type { MailErrorCode } from './errors.js';
+export type { MailErrorCode, MailErrorOperation, MailErrorOptions } from './errors.js';
 export type {
   MailAddress,
   MailAttachment,

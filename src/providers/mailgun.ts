@@ -73,7 +73,9 @@ export function createMailgunProvider(options: MailgunOptions): MailProvider {
         };
         const response = await client.messages.create(options.domain, message);
         if (!response.id) {
-          throw new MailError('Mailgun accepted no message identifier.', 'provider', 'mailgun', false);
+          throw new MailError('Mailgun accepted no message identifier.', 'provider', 'mailgun', false, {
+            deliveryUnknown: true,
+          });
         }
         return { messageId: response.id };
       } catch (error) {

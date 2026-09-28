@@ -90,7 +90,7 @@ try {
   const typeConsumer = join(consumerRoot, 'consumer.ts');
   writeFileSync(
     typeConsumer,
-    `import { createMailer, type MailErrorCode, type MailerOptions, type ProviderName, type SendMailInput, type SendMailResult } from 'typedmailer';
+    `import { createMailer, MailError, type MailErrorCode, type MailErrorOptions, type MailerOptions, type ProviderName, type SendMailInput, type SendMailResult } from 'typedmailer';
      import { createTestMailer } from 'typedmailer/testing';
      const from = 'sender@example.test';
      const options: MailerOptions[] = [
@@ -106,7 +106,9 @@ try {
      const provider: ProviderName = 'ses';
      const testResult: SendMailResult = { provider: 'test', messageId: 'test-1', acceptedAt: new Date() };
      const errorCode: MailErrorCode = 'unsupported';
-     void [provider, testResult, errorCode];
+     const errorOptions: MailErrorOptions = { cause: new Error('original'), deliveryUnknown: true };
+     new MailError('uncertain send', errorCode, provider, true, errorOptions);
+     void [provider, testResult];
      for (const option of options) createMailer(option).send(message);
      createTestMailer({ from: 'sender@example.test' }).send(message);`,
   );

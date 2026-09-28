@@ -197,6 +197,7 @@ describe('Resend adapter', () => {
     await expect(mailer.send({ to: 'reader@example.com', subject: 'Hello', text: 'Hi' })).rejects.toMatchObject({
       code: 'provider',
       provider: 'resend',
+      deliveryUnknown: true,
     });
   });
 });
@@ -332,6 +333,33 @@ describe('SMTP adapter', () => {
       code: 'configuration',
       provider: 'smtp',
     });
+  });
+
+  it('maps named address objects to Nodemailer address shapes', async () => {
+    mocks.smtpSendMail.mockResolvedValue({ messageId: '<named-message>' });
+    const mailer = createMailer({
+      provider: 'smtp',
+      host: 'smtp.example.com',
+      port: 465,
+      secure: true,
+      from: { email: 'sender@example.com', name: 'Sender' },
+    });
+
+    await mailer.send({
+      to: { email: 'reader@example.com', name: 'Reader' },
+      replyTo: { email: 'reply@example.com', name: 'Support' },
+      subject: 'Hello',
+      text: 'Hi',
+    });
+
+    expect(mocks.smtpSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: { address: 'sender@example.com', name: 'Sender' },
+        to: [{ address: 'reader@example.com', name: 'Reader' }],
+        replyTo: { address: 'reply@example.com', name: 'Support' },
+      }),
+    );
+    await mailer.close();
   });
 
   it('rejects unsupported metadata and normalizes transport errors', async () => {

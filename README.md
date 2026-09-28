@@ -206,7 +206,7 @@ For Amazon SES, run `npm install typedmailer @aws-sdk/client-sesv2 && node --env
 
 ## Errors and delivery
 
-Provider and transport failures are normalized as `MailError`, with `code`, `provider`, `retryable`, and the original error in `cause`. Codes mean:
+Provider and transport failures are normalized as `MailError`, with `code`, `provider`, `retryable`, `deliveryUnknown`, and the original error in `cause`. Codes mean:
 
 | Code             | Meaning                                                               |
 | ---------------- | --------------------------------------------------------------------- |
@@ -217,7 +217,7 @@ Provider and transport failures are normalized as `MailError`, with `code`, `pro
 | `provider`       | The provider returned another failure or an invalid response.         |
 | `unsupported`    | The selected adapter cannot represent a requested field or operation. |
 
-`retryable` is guidance from the normalized failure: recognized network failures and rate limits are retryable; API provider 5xx failures are retryable; authentication, configuration, unsupported, and SMTP 5xx failures are not. This does not guarantee that retrying is safe. A timeout may happen after the provider accepted a message, so use provider-supported idempotency where available and apply retry policy in your application. `cause` retains the original SDK error for diagnostics and can contain provider details; avoid logging it without reviewing your data handling policy.
+`retryable` is guidance from the normalized failure: recognized network failures and rate limits are retryable; API provider 5xx failures are retryable; authentication, configuration, unsupported, and SMTP 5xx failures are not. `deliveryUnknown` is separate: it is true when a send timeout/socket interruption, a provider 5xx, or an accepted response without a message ID means the provider may have accepted the message without returning a clear result. It stays false for verification failures, DNS lookup failures, authentication errors, rate limits, and SMTP response errors. This does not guarantee that retrying is safe. Use provider-supported idempotency where available and apply retry policy in your application. `cause` retains the original SDK error for diagnostics and can contain provider details; avoid logging it without reviewing your data handling policy.
 
 A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Delivery, bounce, and complaint events require provider webhooks and are outside this package's current scope.
 

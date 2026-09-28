@@ -65,7 +65,9 @@ export function createSesProvider(options: SesOptions): MailProvider {
         );
 
         if (!response.MessageId) {
-          throw new MailError('Amazon SES accepted no message identifier.', 'provider', 'ses', false);
+          throw new MailError('Amazon SES accepted no message identifier.', 'provider', 'ses', false, {
+            deliveryUnknown: true,
+          });
         }
         return { messageId: response.MessageId };
       } catch (error) {

@@ -45,7 +45,9 @@ export function createPostmarkProvider(options: { apiKey: string }): MailProvide
         });
 
         if (!response.MessageID) {
-          throw new MailError('Postmark accepted no message identifier.', 'provider', 'postmark', false);
+          throw new MailError('Postmark accepted no message identifier.', 'provider', 'postmark', false, {
+            deliveryUnknown: true,
+          });
         }
         return { messageId: response.MessageID };
       } catch (error) {

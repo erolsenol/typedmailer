@@ -55,7 +55,9 @@ export function createSendGridProvider(options: { apiKey: string }): MailProvide
 
         const messageId = getHeader(response.headers, 'x-message-id');
         if (!messageId) {
-          throw new MailError('SendGrid accepted no message identifier.', 'provider', 'sendgrid', false);
+          throw new MailError('SendGrid accepted no message identifier.', 'provider', 'sendgrid', false, {
+            deliveryUnknown: true,
+          });
         }
         return { messageId };
       } catch (error) {

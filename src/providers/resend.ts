@@ -49,7 +49,11 @@ export function createResendProvider(options: { apiKey: string }): MailProvider 
         : await client.emails.send(payload as unknown as CreateEmailOptions);
       const { data, error } = response;
       if (error) throw normalizeProviderError(error, 'resend');
-      if (!data?.id) throw new MailError('Resend accepted no message identifier.', 'provider', 'resend', false);
+      if (!data?.id) {
+        throw new MailError('Resend accepted no message identifier.', 'provider', 'resend', false, {
+          deliveryUnknown: true,
+        });
+      }
       return { messageId: data.id };
     },
     async verifyConnection() {
