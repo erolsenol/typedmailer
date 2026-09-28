@@ -21,6 +21,8 @@ const baseOptions = z.object({
 const providerOptions = {
   resend: baseOptions.extend({ provider: z.literal('resend'), apiKey: z.string().min(1) }),
   brevo: baseOptions.extend({ provider: z.literal('brevo'), apiKey: z.string().min(1) }),
+  postmark: baseOptions.extend({ provider: z.literal('postmark'), apiKey: z.string().min(1) }),
+  sendgrid: baseOptions.extend({ provider: z.literal('sendgrid'), apiKey: z.string().min(1) }),
   smtp: baseOptions
     .extend({
       provider: z.literal('smtp'),
@@ -55,6 +57,14 @@ async function loadProvider(
         const { createBrevoProvider } = await import('./providers/brevo.js');
         return createBrevoProvider(options);
       }
+      case 'postmark': {
+        const { createPostmarkProvider } = await import('./providers/postmark.js');
+        return createPostmarkProvider(options);
+      }
+      case 'sendgrid': {
+        const { createSendGridProvider } = await import('./providers/sendgrid.js');
+        return createSendGridProvider(options);
+      }
       case 'smtp': {
         const { createSmtpProvider } = await import('./providers/smtp.js');
         return createSmtpProvider({
@@ -72,8 +82,14 @@ async function loadProvider(
   } catch (error) {
     const moduleNotFound = error as { code?: unknown };
     if (moduleNotFound?.code === 'ERR_MODULE_NOT_FOUND') {
-      const dependency =
-        options.provider === 'brevo' ? '@getbrevo/brevo' : options.provider === 'resend' ? 'resend' : 'nodemailer';
+      const dependencies = {
+        brevo: '@getbrevo/brevo',
+        postmark: 'postmark',
+        resend: 'resend',
+        sendgrid: '@sendgrid/mail',
+        smtp: 'nodemailer',
+      } as const;
+      const dependency = dependencies[options.provider];
       throw new MailError(
         `Install the optional provider package "${dependency}" to use ${options.provider}.`,
         'configuration',
@@ -90,7 +106,13 @@ export function createMailer(input: MailerOptions): Mailer {
   let providerPromise: Promise<MailProvider> | undefined;
   let closed = false;
   const parsedOptions = z
-    .discriminatedUnion('provider', [providerOptions.resend, providerOptions.brevo, providerOptions.smtp])
+    .discriminatedUnion('provider', [
+      providerOptions.resend,
+      providerOptions.brevo,
+      providerOptions.postmark,
+      providerOptions.sendgrid,
+      providerOptions.smtp,
+    ])
     .parse(input);
   const getProvider = (): Promise<MailProvider> => {
     if (closed) throw new MailError('Mailer has been closed.', 'configuration', parsedOptions.provider, false);

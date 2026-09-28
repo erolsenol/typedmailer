@@ -53,14 +53,22 @@
   },
   "peerDependencies": {
     "@getbrevo/brevo": ">=6 <7",
+    "@sendgrid/mail": ">=8 <9",
     "nodemailer": ">=7 <11",
+    "postmark": ">=5 <6",
     "resend": ">=6 <7"
   },
   "peerDependenciesMeta": {
     "@getbrevo/brevo": {
       "optional": true
     },
+    "@sendgrid/mail": {
+      "optional": true
+    },
     "nodemailer": {
+      "optional": true
+    },
+    "postmark": {
       "optional": true
     },
     "resend": {
@@ -69,12 +77,14 @@
   },
   "devDependencies": {
     "@getbrevo/brevo": "^6.0.3",
+    "@sendgrid/mail": "^8.1.6",
     "@types/node": "^24.5.2",
     "@types/nodemailer": "^7.0.1",
     "eslint": "^10.11.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "nodemailer": "^10.0.12",
+    "postmark": "^5.1.0",
     "prettier": "^3.9.9",
     "resend": "^6.30.0",
     "typescript": "^5.9.2",

@@ -23,7 +23,7 @@ export interface SendMailInput {
   readonly metadata?: Readonly<Record<string, string>>;
 }
 
-export type ProviderName = 'resend' | 'brevo' | 'smtp';
+export type ProviderName = 'resend' | 'brevo' | 'smtp' | 'postmark' | 'sendgrid';
 
 export interface SendMailResult {
   readonly provider: ProviderName;
