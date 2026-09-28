@@ -12,6 +12,9 @@ export function createBrevoProvider(options: { apiKey: string }): MailProvider {
         if (input.idempotencyKey) {
           throw new MailError('Brevo idempotency keys are not supported by this adapter.', 'unsupported', 'brevo', false);
         }
+        if (input.attachments?.some((attachment) => attachment.contentId)) {
+          throw new MailError('Inline attachment content IDs are not supported by the Brevo adapter.', 'unsupported', 'brevo', false);
+        }
         const result = await client.transactionalEmails.sendTransacEmail({
           sender: addressWithName(input.from),
           to: input.to.map(addressWithName),

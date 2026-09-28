@@ -4,6 +4,7 @@ export interface MailAttachment {
   readonly filename: string;
   readonly content: string | Uint8Array;
   readonly contentType?: string;
+  readonly contentId?: string;
 }
 
 export interface SendMailInput {

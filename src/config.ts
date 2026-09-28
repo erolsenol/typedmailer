@@ -24,6 +24,7 @@ export const mailInputSchema = z.object({
     filename: z.string().min(1),
     content: z.union([z.string(), z.instanceof(Uint8Array)]),
     contentType: z.string().optional(),
+    contentId: z.string().optional(),
   })).optional(),
   idempotencyKey: z.string().min(1).optional(),
   metadata: z.record(z.string(), z.string()).optional(),

@@ -45,6 +45,7 @@ export function createSmtpProvider(options: SmtpOptions): MailProvider {
             filename: attachment.filename,
             content: typeof attachment.content === 'string' ? attachment.content : Buffer.from(attachment.content),
             ...(attachment.contentType ? { contentType: attachment.contentType } : {}),
+            ...(attachment.contentId ? { cid: attachment.contentId } : {}),
           })) } : {}),
         }) as Promise<{ messageId?: string }>);
         if (!result.messageId) throw new MailError('SMTP returned no message identifier.', 'provider', 'smtp', false);

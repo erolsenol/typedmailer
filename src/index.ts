@@ -94,6 +94,7 @@ export function createMailer(input: MailerOptions): Mailer {
           filename: item.filename,
           content: item.content,
           ...(item.contentType ? { contentType: item.contentType } : {}),
+          ...(item.contentId ? { contentId: item.contentId } : {}),
         })) } : {}),
         ...(parsed.idempotencyKey ? { idempotencyKey: parsed.idempotencyKey } : {}),
         ...(parsed.metadata ? { metadata: parsed.metadata } : {}),
