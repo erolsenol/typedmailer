@@ -68,22 +68,46 @@ try {
     const result = await testMailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' });
     assert.equal(result.messageId, 'test-1');
 
-    const mailer = api.createMailer({ provider: 'resend', apiKey: 'placeholder', from: 'sender@example.test' });
-    await assert.rejects(
-      mailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' }),
-      (error) => error instanceof api.MailError && error.code === 'configuration' && error.message.includes('resend'),
-    );
+    const missingPeers = [
+      [{ provider: 'resend', apiKey: 'placeholder', from: 'sender@example.test' }, 'resend'],
+      [{ provider: 'brevo', apiKey: 'placeholder', from: 'sender@example.test' }, '@getbrevo/brevo'],
+      [{ provider: 'postmark', apiKey: 'placeholder', from: 'sender@example.test' }, 'postmark'],
+      [{ provider: 'sendgrid', apiKey: 'placeholder', from: 'sender@example.test' }, '@sendgrid/mail'],
+      [{ provider: 'mailgun', apiKey: 'placeholder', domain: 'mg.example.test', from: 'sender@example.test' }, 'mailgun.js'],
+      [{ provider: 'ses', region: 'us-east-1', from: 'sender@example.test' }, '@aws-sdk/client-sesv2'],
+      [{ provider: 'smtp', host: '127.0.0.1', port: 1025, secure: false, from: 'sender@example.test' }, 'nodemailer'],
+    ];
+    for (const [options, dependency] of missingPeers) {
+      const mailer = api.createMailer(options);
+      await assert.rejects(
+        mailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' }),
+        (error) => error instanceof api.MailError && error.code === 'configuration' && error.message.includes(dependency),
+      );
+    }
   `;
   run(process.execPath, ['--input-type=module', '-e', consumerSmoke], { cwd: consumerRoot });
 
   const typeConsumer = join(consumerRoot, 'consumer.ts');
   writeFileSync(
     typeConsumer,
-    `import { createMailer, type MailerOptions, type SendMailInput } from 'typedmailer';
+    `import { createMailer, type MailErrorCode, type MailerOptions, type ProviderName, type SendMailInput, type SendMailResult } from 'typedmailer';
      import { createTestMailer } from 'typedmailer/testing';
-     const options: MailerOptions = { provider: 'ses', region: 'us-east-1', from: 'sender@example.test' };
+     const from = 'sender@example.test';
+     const options: MailerOptions[] = [
+       { provider: 'resend', apiKey: 'placeholder', from },
+       { provider: 'brevo', apiKey: 'placeholder', from },
+       { provider: 'postmark', apiKey: 'placeholder', from },
+       { provider: 'sendgrid', apiKey: 'placeholder', from },
+       { provider: 'mailgun', apiKey: 'placeholder', domain: 'mg.example.test', from },
+       { provider: 'ses', region: 'us-east-1', from },
+       { provider: 'smtp', host: '127.0.0.1', port: 1025, secure: false, from },
+     ];
      const message: SendMailInput = { to: 'reader@example.test', subject: 'Hello', text: 'Hi' };
-     createMailer(options).send(message);
+     const provider: ProviderName = 'ses';
+     const testResult: SendMailResult = { provider: 'test', messageId: 'test-1', acceptedAt: new Date() };
+     const errorCode: MailErrorCode = 'unsupported';
+     void [provider, testResult, errorCode];
+     for (const option of options) createMailer(option).send(message);
      createTestMailer({ from: 'sender@example.test' }).send(message);`,
   );
   run(

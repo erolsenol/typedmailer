@@ -4,7 +4,7 @@
 
 <h1 align="center">TypedMailer: TypeScript Email Sending for Node.js</h1>
 
-<p align="center"><strong>One typed API for sending Node.js email with Resend, Brevo, or SMTP.</strong></p>
+<p align="center"><strong>One typed API for sending Node.js email with seven providers.</strong></p>
 
 <p align="center">
   <a href="https://github.com/erolsenol/typedmailer/actions/workflows/ci.yml"><img src="https://github.com/erolsenol/typedmailer/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
@@ -151,7 +151,9 @@ For local development, start Mailpit with `docker run --rm -p 1025:1025 -p 8025:
 
 ## Message options
 
-`to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend, Postmark, SendGrid, and SMTP.
+`to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend, Postmark, SendGrid, Mailgun, Amazon SES, and SMTP. Attachment content accepts strings or `Uint8Array`; the provider adapters buffer it for SDK requests, so use an application-managed upload or streaming workflow for large files.
+
+Subjects and attachment filenames cannot be blank. Supplied content types and inline content IDs must be non-empty. The library does not impose a fixed attachment-size limit.
 
 Provider capabilities differ. Unsupported fields return a `MailError` with code `unsupported` instead of being silently ignored.
 
@@ -191,11 +193,37 @@ console.log(mailer.sent[0]);
 
 Messages captured by `createTestMailer` return `provider: 'test'` so test results are not mistaken for SMTP deliveries.
 
+## Runnable examples
+
+The repository includes complete Resend, Amazon SES, and local SMTP/Mailpit examples in [`examples/`](examples/). From a clone, copy `examples/.env.example` to `.env`, replace the example sender and recipient with addresses valid for your account, then install the SDK for the chosen provider:
+
+```sh
+npm install typedmailer resend
+node --env-file=.env examples/resend.mjs
+```
+
+For Amazon SES, run `npm install typedmailer @aws-sdk/client-sesv2 && node --env-file=.env examples/ses.mjs`; credentials come from the standard AWS SDK credential provider chain. For local SMTP, start Mailpit with `docker run --rm -p 1025:1025 -p 8025:8025 axllent/mailpit`, then run `npm install typedmailer nodemailer && node --env-file=.env examples/smtp-mailpit.mjs`. View captured messages at `http://127.0.0.1:8025`.
+
 ## Errors and delivery
 
-Provider and transport failures are normalized as `MailError`, with `code`, `provider`, and `retryable` fields. A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Delivery, bounce, and complaint events require provider webhooks and are outside this package's current scope.
+Provider and transport failures are normalized as `MailError`, with `code`, `provider`, `retryable`, and the original error in `cause`. Codes mean:
+
+| Code             | Meaning                                                               |
+| ---------------- | --------------------------------------------------------------------- |
+| `configuration`  | Invalid setup, missing optional SDK, or use after close.              |
+| `authentication` | The provider rejected credentials or access.                          |
+| `rate_limit`     | The provider throttled the request.                                   |
+| `network`        | A recognized connection or timeout failure occurred.                  |
+| `provider`       | The provider returned another failure or an invalid response.         |
+| `unsupported`    | The selected adapter cannot represent a requested field or operation. |
+
+`retryable` is guidance from the normalized failure: recognized network failures and rate limits are retryable; API provider 5xx failures are retryable; authentication, configuration, unsupported, and SMTP 5xx failures are not. This does not guarantee that retrying is safe. A timeout may happen after the provider accepted a message, so use provider-supported idempotency where available and apply retry policy in your application. `cause` retains the original SDK error for diagnostics and can contain provider details; avoid logging it without reviewing your data handling policy.
+
+A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Delivery, bounce, and complaint events require provider webhooks and are outside this package's current scope.
 
 `verifyConnection()` currently supports SMTP. API provider adapters report `unsupported` because they do not expose a side-effect-free credential check through this API; verify credentials with a controlled provider test message.
+
+`close()` is idempotent. It rejects new sends and verification calls, waits for operations already in progress, and closes the provider transport at most once. Reuse requires creating a new mailer.
 
 ## Security
 

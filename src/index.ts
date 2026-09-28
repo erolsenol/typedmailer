@@ -121,6 +121,9 @@ async function loadProvider(
 export function createMailer(input: MailerOptions): Mailer {
   let providerPromise: Promise<MailProvider> | undefined;
   let closed = false;
+  let closePromise: Promise<void> | undefined;
+  let activeOperations = 0;
+  let resolveOperationsIdle: (() => void) | undefined;
   const parsedOptions = z
     .discriminatedUnion('provider', [
       providerOptions.resend,
@@ -132,14 +135,31 @@ export function createMailer(input: MailerOptions): Mailer {
       providerOptions.smtp,
     ])
     .parse(input);
-  const getProvider = (): Promise<MailProvider> => {
+  const assertOpen = (): void => {
     if (closed) throw new MailError('Mailer has been closed.', 'configuration', parsedOptions.provider, false);
+  };
+  const getProvider = (): Promise<MailProvider> => {
+    assertOpen();
     providerPromise ??= loadProvider(parsedOptions);
     return providerPromise;
+  };
+  const runWithProvider = async <T>(operation: (provider: MailProvider) => Promise<T>): Promise<T> => {
+    assertOpen();
+    activeOperations += 1;
+    try {
+      return await operation(await getProvider());
+    } finally {
+      activeOperations -= 1;
+      if (activeOperations === 0) {
+        resolveOperationsIdle?.();
+        resolveOperationsIdle = undefined;
+      }
+    }
   };
 
   return {
     async send(input: SendMailInput): Promise<SendMailResult> {
+      assertOpen();
       const parsed = mailInputSchema.parse(input);
       const normalized: NormalizedMailInput = {
         from: (parsed.from ?? parsedOptions.from) as NormalizedMailInput['from'],
@@ -170,7 +190,7 @@ export function createMailer(input: MailerOptions): Mailer {
         ...(parsed.replyTo ? { replyTo: parsed.replyTo as NonNullable<NormalizedMailInput['replyTo']> } : {}),
       };
       try {
-        const result = await (await getProvider()).send(normalized);
+        const result = await runWithProvider((provider) => provider.send(normalized));
         return {
           provider: parsedOptions.provider,
           messageId: result.messageId,
@@ -182,19 +202,29 @@ export function createMailer(input: MailerOptions): Mailer {
     },
     async verifyConnection(): Promise<void> {
       try {
-        await (await getProvider()).verifyConnection();
+        await runWithProvider((provider) => provider.verifyConnection());
       } catch (error) {
         throw normalizeProviderError(error, parsedOptions.provider);
       }
     },
     async close(): Promise<void> {
       closed = true;
-      if (providerPromise) await (await providerPromise).close();
+      closePromise ??= (async () => {
+        if (activeOperations > 0) {
+          await new Promise<void>((resolve) => {
+            resolveOperationsIdle = resolve;
+          });
+        }
+        const provider = await providerPromise?.catch(() => undefined);
+        await provider?.close();
+      })();
+      await closePromise;
     },
   };
 }
 
 export { MailError } from './errors.js';
+export type { MailErrorCode } from './errors.js';
 export type {
   MailAddress,
   MailAttachment,

@@ -24,6 +24,35 @@ describe('mail input configuration', () => {
     ).toBe(false);
   });
 
+  it('rejects blank fields, empty recipient lists, malformed reply-to addresses, and empty attachment metadata', () => {
+    expect(mailInputSchema.safeParse({ to: [], subject: 'Welcome', text: 'Hello' }).success).toBe(false);
+    expect(mailInputSchema.safeParse({ to: 'reader@example.com', subject: '  ', text: 'Hello' }).success).toBe(false);
+    expect(
+      mailInputSchema.safeParse({
+        to: 'reader@example.com',
+        replyTo: 'not-an-email',
+        subject: 'Welcome',
+        text: 'Hello',
+      }).success,
+    ).toBe(false);
+    expect(
+      mailInputSchema.safeParse({
+        to: 'reader@example.com',
+        subject: 'Welcome',
+        text: 'Hello',
+        attachments: [{ filename: '  ', content: new Uint8Array(), contentType: '' }],
+      }).success,
+    ).toBe(false);
+    expect(
+      mailInputSchema.safeParse({
+        to: 'reader@example.com',
+        subject: 'Welcome',
+        text: 'Hello',
+        attachments: [{ filename: 'logo.png', content: new Uint8Array(), contentId: '' }],
+      }).success,
+    ).toBe(false);
+  });
+
   it('normalizes single and multiple addresses', () => {
     expect(normalizeAddresses('reader@example.com')).toEqual(['reader@example.com']);
     expect(normalizeAddresses(['reader@example.com', 'team@example.com'])).toEqual([

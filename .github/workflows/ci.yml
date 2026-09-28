@@ -21,8 +21,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      - run: npm ci
-      - run: npm run check
+      - name: Install provider SDKs and development tools
+        run: npm ci
+      - name: Run tests, type checks, examples, build, and packed consumer checks
+        run: npm run check
 
   supply-chain:
     runs-on: ubuntu-latest

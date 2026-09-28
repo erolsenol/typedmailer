@@ -35,6 +35,7 @@ export interface SendMailResult {
 export interface Mailer {
   send(input: SendMailInput): Promise<SendMailResult>;
   verifyConnection(): Promise<void>;
+  /** Rejects new operations, waits for active operations, and closes the provider at most once. */
   close(): Promise<void>;
 }
 

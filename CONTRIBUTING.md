@@ -10,6 +10,8 @@ Before opening a pull request:
 4. Update the README when public behavior or setup changes.
 5. Update `CHANGELOG.md` for user-visible behavior or public API changes. Follow `RELEASING.md` for version and publication steps.
 
+The CI package matrix installs the declared provider SDK versions and runs the source typecheck and adapter tests on Node.js 22 and 24. The packed-package smoke check installs the tarball with optional peers omitted, then compiles an external TypeScript consumer against every provider option and public result/error type. This checks adapter compatibility with the locked SDK versions and the no-provider-SDK installation path.
+
 The pre-commit hook checks staged TypeScript and documentation/configuration formatting, then runs the unit tests and a staged whitespace check. The pre-push hook runs lint, formatting, tests, typecheck, build, npm package contents, and the packed-consumer smoke test. CI and the publish workflow also run the npm dependency audit.
 
 Changes that affect public types or provider behavior should include a concise migration note.

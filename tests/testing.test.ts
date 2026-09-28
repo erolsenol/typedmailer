@@ -26,4 +26,16 @@ describe('createTestMailer', () => {
     mailer.clear();
     expect(mailer.sent).toEqual([]);
   });
+
+  it('rejects operations after an idempotent close', async () => {
+    const mailer = createTestMailer({ from: 'sender@example.com' });
+    await mailer.close();
+    await mailer.close();
+
+    await expect(mailer.send({ to: 'reader@example.com', subject: 'Hello', text: 'Hi' })).rejects.toMatchObject({
+      code: 'configuration',
+      provider: 'test',
+    });
+    await expect(mailer.verifyConnection()).rejects.toMatchObject({ code: 'configuration', provider: 'test' });
+  });
 });

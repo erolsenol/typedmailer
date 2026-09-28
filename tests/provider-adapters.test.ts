@@ -160,6 +160,29 @@ describe('Resend adapter', () => {
     expect(mocks.resendSend).not.toHaveBeenCalled();
   });
 
+  it('preserves large binary attachments, content types, and inline IDs', async () => {
+    mocks.resendSend.mockResolvedValue({ data: { id: 'resend-large-message' }, error: null });
+    const largeContent = Uint8Array.from({ length: 1024 * 1024 }, (_, index) => index % 256);
+    const mailer = createMailer({ provider: 'resend', apiKey: 'resend-token', from: 'sender@example.com' });
+
+    await mailer.send({
+      to: 'reader@example.com',
+      subject: 'Attachment',
+      text: 'Attached',
+      attachments: [
+        { filename: 'large.bin', content: largeContent, contentType: 'application/octet-stream' },
+        { filename: 'logo.png', content: new Uint8Array([1, 2]), contentType: 'image/png', contentId: 'logo' },
+      ],
+    });
+
+    const sent = mocks.resendSend.mock.calls[0]?.[0] as {
+      attachments: Array<{ content: Buffer; contentType?: string; contentId?: string }>;
+    };
+    expect(sent.attachments[0]?.content.equals(Buffer.from(largeContent))).toBe(true);
+    expect(sent.attachments[0]?.contentType).toBe('application/octet-stream');
+    expect(sent.attachments[1]).toMatchObject({ contentType: 'image/png', contentId: 'logo' });
+  });
+
   it('normalizes SDK errors and rejects a response without an ID', async () => {
     mocks.resendSend.mockResolvedValue({ data: null, error: { statusCode: 401, message: 'secret token rejected' } });
     const mailer = createMailer({ provider: 'resend', apiKey: 'resend-token', from: 'sender@example.com' });
@@ -269,9 +292,43 @@ describe('SMTP adapter', () => {
     mocks.smtpVerify.mockResolvedValue(undefined);
     await mailer.verifyConnection();
     await mailer.close();
+    await mailer.close();
     expect(mocks.smtpVerify).toHaveBeenCalledOnce();
     expect(mocks.smtpClose).toHaveBeenCalledOnce();
     await expect(mailer.send({ to: 'reader@example.com', subject: 'Again', text: 'Hi' })).rejects.toMatchObject({
+      code: 'configuration',
+      provider: 'smtp',
+    });
+  });
+
+  it('waits for an in-flight send before closing and rejects later operations', async () => {
+    let resolveSend: ((value: { messageId: string }) => void) | undefined;
+    mocks.smtpSendMail.mockImplementation(
+      () =>
+        new Promise<{ messageId: string }>((resolve) => {
+          resolveSend = resolve;
+        }),
+    );
+    const mailer = createMailer({
+      provider: 'smtp',
+      host: 'smtp.example.com',
+      port: 465,
+      secure: true,
+      from: 'sender@example.com',
+    });
+
+    const sending = mailer.send({ to: 'reader@example.com', subject: 'Hello', text: 'Hi' });
+    await vi.waitFor(() => expect(mocks.smtpSendMail).toHaveBeenCalledOnce());
+    const closing = mailer.close();
+
+    expect(mocks.smtpClose).not.toHaveBeenCalled();
+    await expect(mailer.verifyConnection()).rejects.toMatchObject({ code: 'configuration', provider: 'smtp' });
+    resolveSend?.({ messageId: '<in-flight-message>' });
+    await expect(sending).resolves.toMatchObject({ messageId: '<in-flight-message>' });
+    await closing;
+
+    expect(mocks.smtpClose).toHaveBeenCalledOnce();
+    await expect(mailer.send({ to: 'reader@example.com', subject: 'Later', text: 'Hi' })).rejects.toMatchObject({
       code: 'configuration',
       provider: 'smtp',
     });

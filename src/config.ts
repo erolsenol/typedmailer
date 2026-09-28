@@ -14,7 +14,10 @@ export const mailInputSchema = z
   .object({
     from: senderSchema.optional(),
     to: z.union([addressSchema, z.array(addressSchema).min(1)]),
-    subject: z.string().min(1),
+    subject: z
+      .string()
+      .min(1)
+      .refine((value) => value.trim().length > 0, 'Subject cannot be blank.'),
     messageId: z.string().min(1).optional(),
     text: z.string().optional(),
     html: z.string().optional(),
@@ -25,10 +28,13 @@ export const mailInputSchema = z
     attachments: z
       .array(
         z.object({
-          filename: z.string().min(1),
+          filename: z
+            .string()
+            .min(1)
+            .refine((value) => value.trim().length > 0, 'Attachment filename cannot be blank.'),
           content: z.union([z.string(), z.instanceof(Uint8Array)]),
-          contentType: z.string().optional(),
-          contentId: z.string().optional(),
+          contentType: z.string().min(1).optional(),
+          contentId: z.string().min(1).optional(),
         }),
       )
       .optional(),
