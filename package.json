@@ -35,7 +35,9 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "pack:check": "npm pack --dry-run",
+    "security:audit": "npm audit --audit-level=high",
+    "package:smoke": "node scripts/package-smoke.mjs",
+    "pack:check": "npm pack --dry-run --ignore-scripts && npm run package:smoke",
     "check": "npm run lint && npm run format:check && npm run test && npm run typecheck && npm run build && npm run pack:check",
     "prepare": "npm run build && husky"
   },

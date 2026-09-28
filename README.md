@@ -13,7 +13,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license" /></a>
 </p>
 
-TypedMailer is a type-safe email library for Node.js and TypeScript applications. It gives server-side code one API for sending transactional email with Resend, Brevo, or SMTP. Your application keeps ownership of templates, queues, retries, and business rules.
+TypedMailer is a type-safe email library for Node.js and TypeScript applications. It gives server-side code one API for sending transactional email with Resend, Brevo, Postmark, SendGrid, Mailgun, Amazon SES, or SMTP. Your application keeps ownership of templates, queues, retries, and business rules.
 
 Use TypedMailer when you want to switch email providers without coupling application code to a provider SDK. Provider SDKs are optional peer dependencies, and only the selected adapter is loaded.
 
@@ -153,7 +153,17 @@ For local development, start Mailpit with `docker run --rm -p 1025:1025 -p 8025:
 
 `to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend, Postmark, SendGrid, and SMTP.
 
-Provider capabilities differ. Postmark, SendGrid, Mailgun, and Amazon SES do not support `idempotencyKey`; unsupported fields return a `MailError` with code `unsupported` instead of being silently ignored.
+Provider capabilities differ. Unsupported fields return a `MailError` with code `unsupported` instead of being silently ignored.
+
+| Provider   | Custom `messageId` | `idempotencyKey` | Metadata | Inline attachments | `verifyConnection()` |
+| ---------- | ------------------ | ---------------- | -------- | ------------------ | -------------------- |
+| Resend     | No                 | Yes              | Yes      | Yes                | Unsupported          |
+| Brevo      | No                 | No               | Yes      | No                 | Unsupported          |
+| Postmark   | No                 | No               | Yes      | Yes                | Unsupported          |
+| SendGrid   | No                 | No               | Yes      | Yes                | Unsupported          |
+| Mailgun    | No                 | No               | Yes      | Yes                | Unsupported          |
+| Amazon SES | No                 | No               | Yes      | Yes                | Unsupported          |
+| SMTP       | Yes                | No               | No       | Yes                | Yes                  |
 
 ```ts
 await mailer.send({
@@ -165,7 +175,7 @@ await mailer.send({
 });
 ```
 
-Provider capabilities differ, so unsupported fields may not behave identically across adapters. TypedMailer does not retry sends automatically: after a network timeout the provider may already have accepted the message. Apply retries only when you understand the provider's idempotency guarantees.
+TypedMailer does not retry sends automatically: after a network timeout the provider may already have accepted the message. Apply retries only when you understand the provider's idempotency guarantees.
 
 ## Test your application flow
 
@@ -183,7 +193,7 @@ console.log(mailer.sent[0]);
 
 Provider and transport failures are normalized as `MailError`, with `code`, `provider`, and `retryable` fields. A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Delivery, bounce, and complaint events require provider webhooks and are outside this package's current scope.
 
-`verifyConnection()` currently supports SMTP. API providers do not expose a side-effect-free credential check through these adapters and report an `unsupported` error; verify those credentials with a controlled provider test message.
+`verifyConnection()` currently supports SMTP. API provider adapters report `unsupported` because they do not expose a side-effect-free credential check through this API; verify credentials with a controlled provider test message.
 
 ## Security
 
@@ -196,11 +206,11 @@ Provider and transport failures are normalized as `MailError`, with `code`, `pro
 
 Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for development and contribution guidelines.
 
-After cloning, run `npm ci` to install dependencies and enable the local Git hooks. Commits run staged-file lint and format checks plus unit tests. Pushes run the full `npm run check` quality gate; GitHub Actions runs the same gate on Node.js 22 and 24.
+After cloning, run `npm ci` to install dependencies and enable the local Git hooks. Commits run staged-file lint and format checks plus unit tests. Pushes run the full `npm run check` quality gate, including an isolated npm tarball consumer smoke test; GitHub Actions runs it on Node.js 22 and 24 and audits dependencies before merge and publish.
 
 ## Türkçe kısa başlangıç
 
-TypedMailer, Node.js sunucu uygulamalarında Resend, Brevo veya SMTP üzerinden e-posta göndermek için ortak ve tip güvenli bir API sunar. Şablonlar, kuyruk ve tekrar deneme politikaları uygulamanızda kalır. Kurulumda kullanacağınız sağlayıcının SDK'sını TypedMailer ile birlikte yükleyin. API anahtarlarını yalnızca sunucu ortamında tutun.
+TypedMailer, Node.js sunucu uygulamalarında Resend, Brevo, Postmark, SendGrid, Mailgun, Amazon SES veya SMTP ile e-posta göndermek için ortak ve tip güvenli bir API sunar. Şablonlar, kuyruk ve tekrar deneme politikaları uygulamanızda kalır. Seçtiğiniz sağlayıcının SDK'sını TypedMailer ile birlikte yükleyin. API anahtarlarını yalnızca sunucu ortamında tutun.
 
 ## License
 
