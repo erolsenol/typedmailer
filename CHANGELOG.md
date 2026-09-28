@@ -4,3 +4,4 @@
 
 - Initial development release with Resend, Brevo, SMTP, and in-memory test adapters.
 - Added Postmark and SendGrid email providers.
+- Added Mailgun and Amazon SES providers.

@@ -31,6 +31,10 @@ npm install typedmailer nodemailer
 npm install typedmailer postmark
 # or
 npm install typedmailer @sendgrid/mail
+# or
+npm install typedmailer mailgun.js form-data
+# or
+npm install typedmailer @aws-sdk/client-sesv2
 ```
 
 Requires Node.js 22 or newer. Provider SDKs are optional peers and are loaded only when their adapter is selected.
@@ -67,6 +71,8 @@ TypedMailer supports these email providers through the same `createMailer` and `
 - **Brevo** for API-based email delivery.
 - **Postmark** for API-based email delivery.
 - **SendGrid** for API-based email delivery.
+- **Mailgun** for API-based email delivery in US or EU regions.
+- **Amazon SES** for API-based email delivery using AWS credentials.
 - **SMTP** for compatible SMTP services and local development servers such as Mailpit.
 
 ### Brevo
@@ -101,6 +107,32 @@ const mailer = createMailer({
 });
 ```
 
+### Mailgun
+
+Mailgun requires a sending domain and API key. Set `region` to `'eu'` for an EU account; it defaults to `'us'`.
+
+```ts
+const mailer = createMailer({
+  provider: 'mailgun',
+  apiKey: process.env.MAILGUN_API_KEY!,
+  domain: process.env.MAILGUN_DOMAIN!,
+  region: 'eu',
+  from: 'Example App <noreply@example.com>',
+});
+```
+
+### Amazon SES
+
+SES requires a region and uses the AWS SDK credential provider chain, such as environment credentials, a shared profile, or an IAM role.
+
+```ts
+const mailer = createMailer({
+  provider: 'ses',
+  region: process.env.AWS_REGION!,
+  from: 'Example App <noreply@example.com>',
+});
+```
+
 ### SMTP
 
 ```ts
@@ -121,7 +153,7 @@ For local development, start Mailpit with `docker run --rm -p 1025:1025 -p 8025:
 
 `to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend, Postmark, SendGrid, and SMTP.
 
-Provider capabilities differ. Postmark and SendGrid do not support `idempotencyKey`; unsupported fields return a `MailError` with code `unsupported` instead of being silently ignored.
+Provider capabilities differ. Postmark, SendGrid, Mailgun, and Amazon SES do not support `idempotencyKey`; unsupported fields return a `MailError` with code `unsupported` instead of being silently ignored.
 
 ```ts
 await mailer.send({
@@ -151,7 +183,7 @@ console.log(mailer.sent[0]);
 
 Provider and transport failures are normalized as `MailError`, with `code`, `provider`, and `retryable` fields. A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Delivery, bounce, and complaint events require provider webhooks and are outside this package's current scope.
 
-`verifyConnection()` currently supports SMTP. Resend and Brevo do not expose a side-effect-free credential check through these adapters and report an `unsupported` error; verify those credentials with a controlled provider test message.
+`verifyConnection()` currently supports SMTP. API providers do not expose a side-effect-free credential check through these adapters and report an `unsupported` error; verify those credentials with a controlled provider test message.
 
 ## Security
 

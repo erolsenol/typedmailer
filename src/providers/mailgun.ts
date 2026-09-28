@@ -32,12 +32,21 @@ export function createMailgunProvider(options: MailgunOptions): MailProvider {
           );
         }
 
+        const content =
+          input.text !== undefined
+            ? { text: input.text, ...(input.html !== undefined ? { html: input.html } : {}) }
+            : input.html !== undefined
+              ? { html: input.html }
+              : undefined;
+        if (!content) {
+          throw new MailError('Provide text or HTML content.', 'configuration', 'mailgun', false);
+        }
+
         const message: MailgunMessageData = {
           from: formatAddress(input.from),
           to: input.to.map(formatAddress),
           subject: input.subject,
-          ...(input.text !== undefined ? { text: input.text } : {}),
-          ...(input.html !== undefined ? { html: input.html } : {}),
+          ...content,
           ...(input.cc ? { cc: input.cc.map(formatAddress) } : {}),
           ...(input.bcc ? { bcc: input.bcc.map(formatAddress) } : {}),
           ...(input.replyTo ? { 'h:Reply-To': formatAddress(input.replyTo) } : {}),
@@ -56,7 +65,7 @@ export function createMailgunProvider(options: MailgunOptions): MailProvider {
                   .filter((attachment) => Boolean(attachment.contentId))
                   .map((attachment) => ({
                     data: Buffer.from(attachment.content),
-                    filename: attachment.contentId,
+                    filename: attachment.contentId!,
                     ...(attachment.contentType ? { contentType: attachment.contentType } : {}),
                   })),
               }
