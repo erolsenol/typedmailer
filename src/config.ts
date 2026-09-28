@@ -37,9 +37,13 @@ export function normalizeAddresses<T>(value: T | readonly T[] | undefined): read
 }
 
 export function emailOf(address: string | { email: string; name?: string }): string {
-  return typeof address === 'string' ? address : address.email;
+  if (typeof address !== 'string') return address.email;
+  const namedAddress = address.match(/^(.+) <([^<>\s]+@[^<>\s]+)>$/);
+  return namedAddress?.[2] ?? address;
 }
 
 export function addressWithName(address: string | { email: string; name?: string }): { email: string; name?: string } {
-  return typeof address === 'string' ? { email: address } : address;
+  if (typeof address !== 'string') return address;
+  const namedAddress = address.match(/^(.+) <([^<>\s]+@[^<>\s]+)>$/);
+  return namedAddress ? { email: namedAddress[2]!, name: namedAddress[1]! } : { email: address };
 }

@@ -5,8 +5,10 @@
 Mailbridge standardizes message input, configuration errors, and provider results. Your application keeps ownership of templates, queues, retries, and business rules.
 
 > Early development: `0.1.0`. The public API may change before `1.0.0`.
+>
+> **npm publication is pending.** Until the first npm release, install from GitHub with `npm install github:erolsenol/mailbridge#main resend` (or replace `resend` with `@getbrevo/brevo` or `nodemailer`).
 
-## Install
+## Install (after npm publication)
 
 Install Mailbridge and the adapter you plan to use:
 

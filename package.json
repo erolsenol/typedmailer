@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepack": "npm run build"
+    "prepare": "npm run build"
   },
   "dependencies": { "zod": "^4.6.5" },
   "peerDependencies": {
