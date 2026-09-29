@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Preserve `deliveryUnknown` when provider adapters normalize send responses that omit a message ID.
+- Add default 1 MiB webhook body and 1,000 event limits, with finite per-request overrides.
+- Allow SMTP STARTTLS to be required on any port and document production TLS settings.
+- Extend npm provenance polling for registry propagation and report actionable errors after publication.
+
 ## 1.3.0 - 2026-09-29
 
 - Added the public `ProviderAdapter` API so applications can integrate custom email services with typed provider-name results.

@@ -51,7 +51,7 @@ export function createPostmarkProvider(options: { apiKey: string }): MailProvide
         }
         return { messageId: response.MessageID };
       } catch (error) {
-        throw normalizeProviderError(error, 'postmark');
+        throw normalizeProviderError(error, 'postmark', 'send');
       }
     },
     async verifyConnection() {

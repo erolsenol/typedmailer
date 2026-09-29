@@ -64,4 +64,14 @@ describe('Postmark adapter', () => {
       retryable: false,
     });
   });
+
+  it('marks an accepted response without a message ID as delivery-unknown', async () => {
+    mocks.postmarkSendEmail.mockResolvedValue({});
+    const mailer = createMailer({ provider: 'postmark', apiKey: 'postmark-token', from: 'sender@example.com' });
+
+    await expect(mailer.send({ to: 'reader@example.com', subject: 'Hello', text: 'Hi' })).rejects.toMatchObject({
+      provider: 'postmark',
+      deliveryUnknown: true,
+    });
+  });
 });

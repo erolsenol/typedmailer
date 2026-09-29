@@ -79,7 +79,7 @@ export function createMailgunProvider(options: MailgunOptions): MailProvider {
         }
         return { messageId: response.id };
       } catch (error) {
-        throw normalizeProviderError(error, 'mailgun');
+        throw normalizeProviderError(error, 'mailgun', 'send');
       }
     },
     async verifyConnection() {

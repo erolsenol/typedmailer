@@ -61,7 +61,7 @@ export function createSendGridProvider(options: { apiKey: string }): MailProvide
         }
         return { messageId };
       } catch (error) {
-        throw normalizeProviderError(error, 'sendgrid');
+        throw normalizeProviderError(error, 'sendgrid', 'send');
       }
     },
     async verifyConnection() {

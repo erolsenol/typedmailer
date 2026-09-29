@@ -73,4 +73,19 @@ describe('Mailgun adapter', () => {
       url: 'https://api.mailgun.net',
     });
   });
+
+  it('marks an accepted response without a message ID as delivery-unknown', async () => {
+    mocks.mailgunCreate.mockResolvedValue({});
+    const mailer = createMailer({
+      provider: 'mailgun',
+      apiKey: 'mailgun-key',
+      domain: 'mg.example.com',
+      from: 'sender@example.com',
+    });
+
+    await expect(mailer.send({ to: 'reader@example.com', subject: 'Hello', text: 'Hi' })).rejects.toMatchObject({
+      provider: 'mailgun',
+      deliveryUnknown: true,
+    });
+  });
 });
