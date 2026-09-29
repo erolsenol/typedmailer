@@ -12,6 +12,8 @@ The active npm identity is `erol.senol`, so TypedMailer uses the unscoped packag
 
 ## Subsequent releases
 
+Prepare version and changelog changes on `development`, then open a pull request from `development` to `main`. Merge only after required CI checks pass. Create the release tag and GitHub Release from the resulting `main` commit; do not publish from a work branch. See the [branching strategy](docs/branching-strategy.md).
+
 Before each release:
 
 1. Confirm npm Trusted Publishing is configured for package `typedmailer`, GitHub owner `erolsenol`, repository `typedmailer`, and workflow filename `publish.yml`. Do this before creating a GitHub Release because publishing the release starts the npm workflow.

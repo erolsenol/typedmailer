@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 - Unreleased
+## 1.1.0 - 2026-09-29
 
 - Removed the non-English README section for a consistent English-language package experience.
 - Added provider webhook authentication and normalized event types for Resend, Mailgun, SendGrid, Brevo, Postmark, and Amazon SES/SNS.

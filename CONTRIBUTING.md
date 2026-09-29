@@ -2,6 +2,8 @@
 
 Issues and pull requests are welcome. For provider changes, describe capability differences and preserve the common API's predictable behavior.
 
+Use the [branching and release strategy](docs/branching-strategy.md) for branch names, pull request targets, and release merges.
+
 Before opening a pull request:
 
 1. Keep provider credentials and real recipient data out of commits and logs.
