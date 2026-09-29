@@ -6,7 +6,7 @@ TypedMailer `1.0.0` is published on npm as a public package. Subsequent releases
 
 Configure the npm package's Trusted Publisher for GitHub Actions with user `erolsenol`, repository `typedmailer`, and workflow filename `publish.yml`. npm documents the setup in [Trusted publishers](https://docs.npmjs.com/trusted-publishers/).
 
-The publish workflow starts when a GitHub Release is published. It verifies the tag, package version, and changelog, runs the package checks and audit, then publishes with npm OIDC provenance. See [npm provenance](https://docs.npmjs.com/generating-provenance-statements/).
+The publish workflow starts when a GitHub Release is published. It verifies the tag, package version, and changelog, runs the package checks and audit, then publishes with npm OIDC provenance. After publication it installs that exact version in an isolated project and requires npm's signature audit to find its provenance attestation. This gate fails if Trusted Publishing is not configured or provenance is missing. Version `1.0.0` predates this setup and has no provenance attestation. See [npm provenance](https://docs.npmjs.com/generating-provenance-statements/).
 
 The active npm identity is `erol.senol`, so TypedMailer uses the unscoped package name `typedmailer`. The `@erolsenol` organization scope is not available to this npm account.
 

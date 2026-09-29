@@ -1,8 +1,11 @@
 # Changelog
 
-## 1.0.1 - Unreleased
+## 1.1.0 - Unreleased
 
 - Removed the non-English README section for a consistent English-language package experience.
+- Added provider webhook authentication and normalized event types for Resend, Mailgun, SendGrid, Brevo, Postmark, and Amazon SES/SNS.
+- Added release-time verification that the published npm package has a provenance attestation.
+- Added a non-blocking Node.js 26 compatibility canary.
 
 ## 1.0.0 - 2026-09-29
 

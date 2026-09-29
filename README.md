@@ -221,7 +221,7 @@ Provider and transport failures are normalized as `MailError`, with `code`, `pro
 
 `retryable` is guidance from the normalized failure: recognized network failures and rate limits are retryable; API provider 5xx failures are retryable; authentication, configuration, unsupported, and SMTP 5xx failures are not. `deliveryUnknown` is separate: it is true when a send timeout/socket interruption, a provider 5xx, or an accepted response without a message ID means the provider may have accepted the message without returning a clear result. It stays false for verification failures, DNS lookup failures, authentication errors, rate limits, and SMTP response errors. This does not guarantee that retrying is safe. Use provider-supported idempotency where available and apply retry policy in your application. `cause` retains the original SDK error for diagnostics and can contain provider details; avoid logging it without reviewing your data handling policy.
 
-A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Delivery, bounce, and complaint events require provider webhooks and are outside this package's current scope.
+A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Verify delivery, bounce, and complaint callbacks with [`typedmailer/webhooks`](docs/webhooks.md).
 
 `verifyConnection()` currently supports SMTP. API provider adapters report `unsupported` because they do not expose a side-effect-free credential check through this API; verify credentials with a controlled provider test message.
 

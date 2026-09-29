@@ -26,3 +26,7 @@ jobs:
       - run: npm run check
       - run: npm run security:audit
       - run: npm publish --provenance
+      - name: Verify npm provenance for the published version
+        run: node scripts/verify-published-provenance.mjs
+        env:
+          PUBLISHED_VERSION: ${{ github.event.release.tag_name }}

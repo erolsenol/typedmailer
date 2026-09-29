@@ -7,6 +7,9 @@ updates:
       day: monday
       time: '06:00'
     open-pull-requests-limit: 8
+    ignore:
+      - dependency-name: typescript
+        versions: ['>=7.0.0']
 
   - package-ecosystem: github-actions
     directory: /
