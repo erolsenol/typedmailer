@@ -7,6 +7,7 @@ interface SmtpOptions {
   host: string;
   port: number;
   secure: boolean;
+  requireTLS?: boolean;
   user?: string;
   password?: string;
   connectionTimeout: number;
@@ -24,7 +25,7 @@ export function createSmtpProvider(options: SmtpOptions): MailProvider {
     host: options.host,
     port: options.port,
     secure: options.secure,
-    ...(options.port === 587 && !options.secure ? { requireTLS: true } : {}),
+    requireTLS: options.requireTLS ?? (options.port === 587 && !options.secure),
     connectionTimeout: options.connectionTimeout,
     greetingTimeout: options.greetingTimeout,
     socketTimeout: options.socketTimeout,
@@ -71,7 +72,7 @@ export function createSmtpProvider(options: SmtpOptions): MailProvider {
         }
         return { messageId: result.messageId };
       } catch (error) {
-        throw normalizeProviderError(error, 'smtp');
+        throw normalizeProviderError(error, 'smtp', 'send');
       }
     },
     async verifyConnection() {

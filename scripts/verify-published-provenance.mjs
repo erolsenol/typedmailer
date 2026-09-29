@@ -21,7 +21,8 @@ function run(args) {
 try {
   writeFileSync(join(root, 'package.json'), JSON.stringify({ private: true, dependencies: { typedmailer: version } }));
   let lastMessage = '';
-  for (let attempt = 1; attempt <= 18; attempt += 1) {
+  const maxAttempts = 18;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const install = run(['install', '--ignore-scripts', '--no-audit', '--no-fund']);
     if (install.status === 0) {
       const audit = run(['audit', 'signatures', '--json', '--include-attestations']);
@@ -43,12 +44,13 @@ try {
       lastMessage = `npm install failed: ${install.stderr || install.stdout}`;
     }
 
-    if (attempt === 18) {
+    if (attempt === maxAttempts) {
       throw new Error(
-        `${lastMessage}. Configure npm Trusted Publishing for this GitHub repository and workflow before releasing.`,
+        `${lastMessage}. The package may already be published; check npm registry propagation and provenance before retrying the release.`,
       );
     }
-    await new Promise((resolve) => setTimeout(resolve, 10_000));
+    const delayMs = Math.min(5_000 * 2 ** Math.min(attempt - 1, 3), 30_000);
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
 } finally {
   rmSync(root, { recursive: true, force: true });

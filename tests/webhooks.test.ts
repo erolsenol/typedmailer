@@ -9,6 +9,47 @@ import { verifyWebhook } from '../src/webhooks.js';
 const now = new Date('2026-09-29T12:00:00.000Z');
 
 describe('verifyWebhook', () => {
+  it('applies default body and event limits and supports explicit finite overrides', async () => {
+    await expect(
+      verifyWebhook({
+        provider: 'brevo',
+        rawBody: ' '.repeat(1_048_577),
+        headers: {},
+        authorization: 'test-token',
+      }),
+    ).rejects.toMatchObject({ name: 'WebhookVerificationError', code: 'invalid_payload' });
+
+    const tooManyEvents = JSON.stringify(Array.from({ length: 1_001 }, () => ({ event: 'delivered' })));
+    await expect(
+      verifyWebhook({
+        provider: 'brevo',
+        rawBody: tooManyEvents,
+        headers: { authorization: 'test-token' },
+        authorization: 'test-token',
+      }),
+    ).rejects.toMatchObject({ name: 'WebhookVerificationError', code: 'invalid_payload' });
+
+    await expect(
+      verifyWebhook({
+        provider: 'brevo',
+        rawBody: JSON.stringify([{ event: 'delivered' }, { event: 'opened' }]),
+        headers: { authorization: 'test-token' },
+        authorization: 'test-token',
+        maxEvents: 2,
+      }),
+    ).resolves.toHaveLength(2);
+
+    await expect(
+      verifyWebhook({
+        provider: 'brevo',
+        rawBody: '{}',
+        headers: {},
+        authorization: 'test-token',
+        maxEvents: 0,
+      }),
+    ).rejects.toMatchObject({ name: 'WebhookVerificationError', code: 'invalid_payload' });
+  });
+
   it('rejects oversized or invalid webhook body limits before parsing', async () => {
     await expect(
       verifyWebhook({
