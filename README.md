@@ -160,7 +160,7 @@ For local development, start Mailpit with `docker run --rm -p 1025:1025 -p 8025:
 
 ## Message options
 
-`to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend, Postmark, SendGrid, Mailgun, Amazon SES, and SMTP. Attachment content accepts strings or `Uint8Array`; the provider adapters buffer it for SDK requests, so use an application-managed upload or streaming workflow for large files.
+`to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend, Postmark, SendGrid, Mailgun, Amazon SES, and SMTP. Attachment content accepts strings or `Uint8Array`; the provider adapters buffer it for SDK requests, so use an application-managed upload or streaming workflow for large files. Set `maxAttachmentBytes` on `createMailer()` to reject a message before loading or calling the provider when the combined UTF-8 and binary attachment content exceeds your application's memory budget. It is unset by default for backward compatibility.
 
 Subjects and attachment filenames cannot be blank. Supplied content types and inline content IDs must be non-empty. The library does not impose a fixed attachment-size limit.
 
