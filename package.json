@@ -1,6 +1,6 @@
 {
   "name": "typedmailer",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A type-safe Node.js email library with one API for Resend, Brevo, Postmark, SendGrid, Mailgun, Amazon SES, or SMTP.",
   "author": "Erol Senol",
   "license": "MIT",
