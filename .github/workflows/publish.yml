@@ -18,6 +18,8 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
+      - name: Install the current npm CLI for provenance verification
+        run: npm install --global npm@latest
       - name: Verify release tag, package version, and changelog
         run: npm run release:check
         env:
@@ -26,3 +28,7 @@ jobs:
       - run: npm run check
       - run: npm run security:audit
       - run: npm publish --provenance
+      - name: Verify npm provenance for the published version
+        run: node scripts/verify-published-provenance.mjs
+        env:
+          PUBLISHED_VERSION: ${{ github.event.release.tag_name }}

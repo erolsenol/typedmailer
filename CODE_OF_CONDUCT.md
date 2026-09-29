@@ -17,4 +17,4 @@ Harassment, insults, discriminatory language, intimidation, unwelcome sexual att
 
 ## Enforcement
 
-Report conduct concerns privately through GitHub's contact/reporting tools for the repository owner. Reports will be reviewed and handled as fairly and promptly as possible. Maintainers may remove content or restrict participation for behavior that violates this code.
+Report conduct concerns privately using [GitHub's contact and reporting tools](https://github.com/contact) for the repository owner. Reports will be reviewed and handled as fairly and promptly as possible. Maintainers may remove content or restrict participation for behavior that violates this code.
