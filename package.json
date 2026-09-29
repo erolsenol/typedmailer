@@ -1,45 +1,147 @@
 {
-  "name": "@erolsenol/mailbridge",
-  "version": "0.1.0",
-  "description": "A small, typed email sending interface for Node.js with Resend, Brevo, and SMTP adapters.",
+  "name": "typedmailer",
+  "version": "1.0.0",
+  "description": "A type-safe Node.js email library with one API for Resend, Brevo, Postmark, SendGrid, Mailgun, Amazon SES, or SMTP.",
+  "author": "Erol Senol",
   "license": "MIT",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./testing": { "types": "./dist/testing.d.ts", "import": "./dist/testing.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
+    },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md", "LICENSE", "SECURITY.md", "CODE_OF_CONDUCT.md"],
+  "files": [
+    "dist",
+    "assets/typedmailer-mark.svg",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "SUPPORT.md",
+    "docs/provider-contracts.md",
+    "docs/integration-testing.md",
+    "CODE_OF_CONDUCT.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepare": "npm run build"
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "release:check": "node scripts/release-preflight.mjs",
+    "examples:check": "node --check examples/resend.mjs && node --check examples/ses.mjs && node --check examples/smtp-mailpit.mjs",
+    "security:audit": "npm audit --audit-level=high",
+    "package:smoke": "node scripts/package-smoke.mjs",
+    "integration:smoke": "node scripts/live-provider-smoke.mjs",
+    "pack:check": "npm pack --dry-run --ignore-scripts && npm run package:smoke",
+    "check": "npm run lint && npm run format:check && npm run test && npm run typecheck && npm run examples:check && npm run build && npm run pack:check",
+    "prepare": "npm run build && husky"
   },
-  "dependencies": { "zod": "^4.6.5" },
+  "lint-staged": {
+    "*.ts": [
+      "eslint",
+      "prettier --check"
+    ],
+    "*.{json,md,yml,yaml,js,mjs,cjs}": [
+      "prettier --check"
+    ]
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
   "peerDependencies": {
-    "@getbrevo/brevo": ">=6 <7",
-    "nodemailer": ">=7 <11",
-    "resend": ">=6 <7"
+    "@aws-sdk/client-sesv2": ">=3.0.0 <4",
+    "@getbrevo/brevo": ">=6.0.1 <7",
+    "@sendgrid/mail": ">=8.0.0 <9",
+    "form-data": ">=4.0.0 <5",
+    "mailgun.js": ">=14.0.0 <15",
+    "nodemailer": ">=7.0.0 <11",
+    "postmark": ">=5.0.0 <6",
+    "resend": ">=6.0.0 <7"
   },
   "peerDependenciesMeta": {
-    "@getbrevo/brevo": { "optional": true },
-    "nodemailer": { "optional": true },
-    "resend": { "optional": true }
+    "@aws-sdk/client-sesv2": {
+      "optional": true
+    },
+    "@getbrevo/brevo": {
+      "optional": true
+    },
+    "@sendgrid/mail": {
+      "optional": true
+    },
+    "form-data": {
+      "optional": true
+    },
+    "mailgun.js": {
+      "optional": true
+    },
+    "nodemailer": {
+      "optional": true
+    },
+    "postmark": {
+      "optional": true
+    },
+    "resend": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@getbrevo/brevo": "^6.0.3",
+    "@aws-sdk/client-sesv2": ">=3.0.0 <4",
+    "@getbrevo/brevo": ">=6.0.1 <7",
+    "@sendgrid/mail": ">=8.0.0 <9",
     "@types/node": "^24.5.2",
     "@types/nodemailer": "^7.0.1",
-    "nodemailer": "^10.0.12",
-    "resend": "^6.30.0",
-    "typescript": "^5.9.2"
+    "eslint": "^10.11.0",
+    "form-data": ">=4.0.0 <5",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "mailgun.js": ">=14.0.0 <15",
+    "nodemailer": ">=7.0.0 <11",
+    "postmark": ">=5.0.0 <6",
+    "prettier": "^3.9.9",
+    "resend": ">=6.0.0 <7",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.2"
   },
-  "publishConfig": { "access": "public" },
-  "repository": { "type": "git", "url": "https://github.com/erolsenol/mailbridge.git" },
-  "bugs": { "url": "https://github.com/erolsenol/mailbridge/issues" },
-  "homepage": "https://github.com/erolsenol/mailbridge#readme",
-  "keywords": ["email", "mail", "nodejs", "typescript", "resend", "brevo", "smtp"]
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erolsenol/typedmailer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/erolsenol/typedmailer/issues"
+  },
+  "homepage": "https://github.com/erolsenol/typedmailer#readme",
+  "keywords": [
+    "email",
+    "email-client",
+    "email-library",
+    "email-provider",
+    "email-sending",
+    "amazon-ses",
+    "mailer",
+    "mail",
+    "node",
+    "mailgun",
+    "ses",
+    "typescript",
+    "type-safe",
+    "transactional-email",
+    "smtp",
+    "resend",
+    "brevo",
+    "postmark",
+    "sendgrid",
+    "nodemailer"
+  ]
 }

@@ -1,0 +1,55 @@
+name: Provider integration smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 8 * * 1'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: provider-integration-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: provider-smoke
+    services:
+      mailpit:
+        image: ghcr.io/axllent/mailpit:v1.31.1
+        ports:
+          - 1025:1025
+          - 8025:8025
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Assume SES smoke role through GitHub OIDC
+        if: contains(format(',{0},', vars.TYPEDMAILER_INTEGRATION_PROVIDERS), ',ses,')
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.TYPEDMAILER_AWS_ROLE_ARN }}
+          aws-region: ${{ vars.TYPEDMAILER_AWS_REGION }}
+      - name: Wait for Mailpit HTTP API
+        run: |
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8025/api/v1/info >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          echo 'Mailpit did not become ready.' >&2
+          exit 1
+      - name: Run Mailpit and explicitly enabled provider smoke checks
+        run: npm run integration:smoke
+        env:
+          TYPEDMAILER_INTEGRATION_PROVIDERS: ${{ vars.TYPEDMAILER_INTEGRATION_PROVIDERS || 'mailpit' }}
+          TYPEDMAILER_SMOKE_FROM: ${{ vars.TYPEDMAILER_SMOKE_FROM }}
+          TYPEDMAILER_SMOKE_TO: ${{ vars.TYPEDMAILER_SMOKE_TO }}
+          TYPEDMAILER_RESEND_API_KEY: ${{ secrets.TYPEDMAILER_RESEND_API_KEY }}
+          AWS_REGION: ${{ vars.TYPEDMAILER_AWS_REGION }}

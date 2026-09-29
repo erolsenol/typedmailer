@@ -23,10 +23,10 @@ export interface SendMailInput {
   readonly metadata?: Readonly<Record<string, string>>;
 }
 
-export type ProviderName = 'resend' | 'brevo' | 'smtp' | 'test';
+export type ProviderName = 'resend' | 'brevo' | 'smtp' | 'postmark' | 'sendgrid' | 'mailgun' | 'ses';
 
 export interface SendMailResult {
-  readonly provider: ProviderName;
+  readonly provider: ProviderName | 'test';
   readonly messageId: string;
   /** Time when the provider accepted the request. This does not confirm inbox delivery. */
   readonly acceptedAt: Date;
@@ -35,6 +35,7 @@ export interface SendMailResult {
 export interface Mailer {
   send(input: SendMailInput): Promise<SendMailResult>;
   verifyConnection(): Promise<void>;
+  /** Rejects new operations, waits for active operations, and closes the provider at most once. */
   close(): Promise<void>;
 }
 

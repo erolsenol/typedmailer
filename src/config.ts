@@ -10,28 +10,41 @@ const senderSchema = z.union([
   z.object({ email: z.string().email(), name: z.string().optional() }).strict(),
 ]);
 
-export const mailInputSchema = z.object({
-  from: senderSchema.optional(),
-  to: z.union([addressSchema, z.array(addressSchema).min(1)]),
-  subject: z.string().min(1),
-  messageId: z.string().min(1).optional(),
-  text: z.string().optional(),
-  html: z.string().optional(),
-  replyTo: addressSchema.optional(),
-  cc: z.union([addressSchema, z.array(addressSchema)]).optional(),
-  bcc: z.union([addressSchema, z.array(addressSchema)]).optional(),
-  headers: z.record(z.string(), z.string()).optional(),
-  attachments: z.array(z.object({
-    filename: z.string().min(1),
-    content: z.union([z.string(), z.instanceof(Uint8Array)]),
-    contentType: z.string().optional(),
-    contentId: z.string().optional(),
-  })).optional(),
-  idempotencyKey: z.string().min(1).optional(),
-  metadata: z.record(z.string(), z.string()).optional(),
-}).strict().refine((input) => input.text !== undefined || input.html !== undefined, {
-  message: 'Provide at least one of text or html.',
-});
+export const mailInputSchema = z
+  .object({
+    from: senderSchema.optional(),
+    to: z.union([addressSchema, z.array(addressSchema).min(1)]),
+    subject: z
+      .string()
+      .min(1)
+      .refine((value) => value.trim().length > 0, 'Subject cannot be blank.'),
+    messageId: z.string().min(1).optional(),
+    text: z.string().optional(),
+    html: z.string().optional(),
+    replyTo: addressSchema.optional(),
+    cc: z.union([addressSchema, z.array(addressSchema)]).optional(),
+    bcc: z.union([addressSchema, z.array(addressSchema)]).optional(),
+    headers: z.record(z.string(), z.string()).optional(),
+    attachments: z
+      .array(
+        z.object({
+          filename: z
+            .string()
+            .min(1)
+            .refine((value) => value.trim().length > 0, 'Attachment filename cannot be blank.'),
+          content: z.union([z.string(), z.instanceof(Uint8Array)]),
+          contentType: z.string().min(1).optional(),
+          contentId: z.string().min(1).optional(),
+        }),
+      )
+      .optional(),
+    idempotencyKey: z.string().min(1).optional(),
+    metadata: z.record(z.string(), z.string()).optional(),
+  })
+  .strict()
+  .refine((input) => input.text !== undefined || input.html !== undefined, {
+    message: 'Provide at least one of text or html.',
+  });
 
 export function normalizeAddresses<T>(value: T | readonly T[] | undefined): readonly T[] | undefined {
   if (value === undefined) return undefined;
