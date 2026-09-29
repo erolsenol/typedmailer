@@ -30,6 +30,7 @@ export type WebhookHeaders = Readonly<Record<string, string | readonly string[] 
 interface RawWebhookInput {
   readonly rawBody: string | Uint8Array;
   readonly headers: WebhookHeaders;
+  readonly maxBodyBytes?: number;
   readonly now?: Date;
   readonly toleranceSeconds?: number;
 }

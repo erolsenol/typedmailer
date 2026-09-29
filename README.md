@@ -176,6 +176,32 @@ Provider capabilities differ. Unsupported fields return a `MailError` with code 
 | Amazon SES | No                 | No               | Yes      | Yes                | Unsupported          |
 | SMTP       | Yes                | No               | No       | Yes                | Yes                  |
 
+### Custom providers
+
+Use `ProviderAdapter` when your provider is not built in or you need to wrap an existing mail SDK. The adapter receives normalized addresses and the configured default sender; its `send` method must resolve with the provider message ID. Implement `verifyConnection` only when the provider offers a safe connection check, and use `close` to release resources such as pooled clients.
+
+```ts
+import { createMailer, type ProviderAdapter } from 'typedmailer';
+
+const adapter: ProviderAdapter<'acme'> = {
+  name: 'acme',
+  async send(message) {
+    const response = await acmeClient.sendEmail(message);
+    return { messageId: response.id };
+  },
+  async close() {
+    await acmeClient.close();
+  },
+};
+
+const mailer = createMailer({ provider: adapter, from: 'noreply@example.com' });
+const result = await mailer.send({ to: 'person@example.com', subject: 'Hello', text: 'Hi' });
+// result.provider is typed as "acme".
+await mailer.close();
+```
+
+The custom adapter owns provider SDK setup, field support, and error handling. Throwing an error still passes through TypedMailer error normalization. Connection verification is reported as `unsupported` when the adapter does not implement it.
+
 ```ts
 await mailer.send({
   to: [{ email: 'person@example.com', name: 'Sam' }],

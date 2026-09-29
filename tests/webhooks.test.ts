@@ -9,6 +9,28 @@ import { verifyWebhook } from '../src/webhooks.js';
 const now = new Date('2026-09-29T12:00:00.000Z');
 
 describe('verifyWebhook', () => {
+  it('rejects oversized or invalid webhook body limits before parsing', async () => {
+    await expect(
+      verifyWebhook({
+        provider: 'brevo',
+        rawBody: '{ invalid json }',
+        headers: {},
+        authorization: 'test-token',
+        maxBodyBytes: 4,
+      }),
+    ).rejects.toMatchObject({ name: 'WebhookVerificationError', code: 'invalid_payload' });
+
+    await expect(
+      verifyWebhook({
+        provider: 'brevo',
+        rawBody: '{}',
+        headers: {},
+        authorization: 'test-token',
+        maxBodyBytes: 0,
+      }),
+    ).rejects.toMatchObject({ name: 'WebhookVerificationError', code: 'invalid_payload' });
+  });
+
   it('verifies Resend signatures against the exact raw body and normalizes delivered events', async () => {
     const rawBody = JSON.stringify({
       id: 'evt_123',

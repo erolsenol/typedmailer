@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MailError, normalizeProviderError } from '../src/errors.js';
+import { providerErrorFixtures } from './fixtures/provider-errors.js';
 
 describe('provider error normalization', () => {
   it('maps authentication failures without exposing provider messages', () => {
@@ -78,5 +79,26 @@ describe('provider error normalization', () => {
     const uncertain = new MailError('No message ID', 'provider', 'resend', false, { deliveryUnknown: true });
     expect(normalizeProviderError(uncertain, 'resend', 'send').deliveryUnknown).toBe(true);
     expect(normalizeProviderError(uncertain, 'resend', 'verify').deliveryUnknown).toBe(false);
+  });
+
+  it('normalizes sanitized provider SDK error shapes consistently', () => {
+    const cases = [
+      ['resend', providerErrorFixtures.resendAuth, 'authentication', false, false],
+      ['brevo', providerErrorFixtures.brevoRateLimit, 'rate_limit', true, false],
+      ['postmark', providerErrorFixtures.postmarkAuth, 'authentication', false, false],
+      ['sendgrid', providerErrorFixtures.sendgridRateLimit, 'rate_limit', true, false],
+      ['mailgun', providerErrorFixtures.mailgunUnavailable, 'provider', true, true],
+      ['ses', providerErrorFixtures.sesThrottle, 'rate_limit', true, false],
+      ['smtp', providerErrorFixtures.smtpRejected, 'provider', false, false],
+    ] as const;
+
+    for (const [provider, error, code, retryable, deliveryUnknown] of cases) {
+      expect(normalizeProviderError(error, provider, 'send')).toMatchObject({
+        provider,
+        code,
+        retryable,
+        deliveryUnknown,
+      });
+    }
   });
 });

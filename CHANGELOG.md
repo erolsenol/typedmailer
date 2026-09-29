@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+## 1.3.0 - 2026-09-29
+
+- Added the public `ProviderAdapter` API so applications can integrate custom email services with typed provider-name results.
+- Split built-in provider adapter contract tests into per-provider files and added sanitized error-shape fixtures.
+- Added an optional `maxBodyBytes` check that rejects oversized webhook payloads before JSON parsing.
+- Aligned `MailAddress` optional-name typing with the runtime schema and removed redundant address casts.
+
 ## 1.2.0 - 2026-09-29
 
 - Added an optional aggregate `maxAttachmentBytes` guard that measures UTF-8 text and binary attachment bytes before loading the provider.
