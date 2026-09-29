@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { MailAddress } from './types.js';
 
 const addressSchema = z.union([
   z.string().email(),
@@ -51,14 +52,16 @@ export function normalizeAddresses<T>(value: T | readonly T[] | undefined): read
   return Array.isArray(value) ? value : [value as T];
 }
 
-export function emailOf(address: string | { email: string; name?: string }): string {
+export function emailOf(address: MailAddress): string {
   if (typeof address !== 'string') return address.email;
   const namedAddress = address.match(/^(.+) <([^<>\s]+@[^<>\s]+)>$/);
   return namedAddress?.[2] ?? address;
 }
 
-export function addressWithName(address: string | { email: string; name?: string }): { email: string; name?: string } {
-  if (typeof address !== 'string') return address;
+export function addressWithName(address: MailAddress): { email: string; name?: string } {
+  if (typeof address !== 'string') {
+    return { email: address.email, ...(address.name !== undefined ? { name: address.name } : {}) };
+  }
   const namedAddress = address.match(/^(.+) <([^<>\s]+@[^<>\s]+)>$/);
   return namedAddress ? { email: namedAddress[2]!, name: namedAddress[1]! } : { email: address };
 }

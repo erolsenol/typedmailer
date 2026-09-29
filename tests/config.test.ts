@@ -62,6 +62,17 @@ describe('mail input configuration', () => {
     expect(normalizeAddresses(undefined)).toBeUndefined();
   });
 
+  it('accepts an explicit undefined display name consistently with optional address names', () => {
+    expect(
+      mailInputSchema.safeParse({
+        from: { email: 'sender@example.com', name: undefined },
+        to: { email: 'reader@example.com', name: undefined },
+        subject: 'Welcome',
+        text: 'Hello',
+      }).success,
+    ).toBe(true);
+  });
+
   it('extracts and formats named email addresses', () => {
     expect(emailOf('Reader Name <reader@example.com>')).toBe('reader@example.com');
     expect(addressWithName('Reader Name <reader@example.com>')).toEqual({

@@ -1,4 +1,4 @@
-export type MailAddress = string | { readonly email: string; readonly name?: string };
+export type MailAddress = string | { readonly email: string; readonly name?: string | undefined };
 
 export interface MailAttachment {
   readonly filename: string;

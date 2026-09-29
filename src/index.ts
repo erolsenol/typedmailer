@@ -56,9 +56,11 @@ export function createMailer(input: MailerOptions): Mailer {
           false,
         );
       }
+      const cc = normalizeAddresses(parsed.cc);
+      const bcc = normalizeAddresses(parsed.bcc);
       const normalized: NormalizedMailInput = {
-        from: (parsed.from ?? parsedOptions.from) as NormalizedMailInput['from'],
-        to: (normalizeAddresses(parsed.to) ?? []) as NormalizedMailInput['to'],
+        from: parsed.from ?? parsedOptions.from,
+        to: normalizeAddresses(parsed.to) ?? [],
         subject: parsed.subject,
         ...(parsed.messageId ? { messageId: parsed.messageId } : {}),
         ...(parsed.text !== undefined ? { text: parsed.text } : {}),
@@ -76,13 +78,9 @@ export function createMailer(input: MailerOptions): Mailer {
           : {}),
         ...(parsed.idempotencyKey ? { idempotencyKey: parsed.idempotencyKey } : {}),
         ...(parsed.metadata ? { metadata: parsed.metadata } : {}),
-        ...(normalizeAddresses(parsed.cc)
-          ? { cc: normalizeAddresses(parsed.cc) as NonNullable<NormalizedMailInput['cc']> }
-          : {}),
-        ...(normalizeAddresses(parsed.bcc)
-          ? { bcc: normalizeAddresses(parsed.bcc) as NonNullable<NormalizedMailInput['bcc']> }
-          : {}),
-        ...(parsed.replyTo ? { replyTo: parsed.replyTo as NonNullable<NormalizedMailInput['replyTo']> } : {}),
+        ...(cc ? { cc } : {}),
+        ...(bcc ? { bcc } : {}),
+        ...(parsed.replyTo ? { replyTo: parsed.replyTo } : {}),
       };
       try {
         const result = await runWithProvider((provider) => provider.send(normalized));
