@@ -139,6 +139,9 @@
     "transactional-email",
     "smtp",
     "resend",
-    "brevo"
+    "brevo",
+    "postmark",
+    "sendgrid",
+    "nodemailer"
   ]
 }

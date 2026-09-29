@@ -7,10 +7,17 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+
+concurrency:
+  group: provider-integration-smoke
+  cancel-in-progress: false
 
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: provider-smoke
     services:
       mailpit:
         image: ghcr.io/axllent/mailpit:v1.31.1
@@ -24,6 +31,12 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Assume SES smoke role through GitHub OIDC
+        if: contains(format(',{0},', vars.TYPEDMAILER_INTEGRATION_PROVIDERS), ',ses,')
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.TYPEDMAILER_AWS_ROLE_ARN }}
+          aws-region: ${{ vars.TYPEDMAILER_AWS_REGION }}
       - name: Wait for Mailpit HTTP API
         run: |
           for attempt in $(seq 1 20); do
@@ -39,7 +52,4 @@ jobs:
           TYPEDMAILER_SMOKE_FROM: ${{ vars.TYPEDMAILER_SMOKE_FROM }}
           TYPEDMAILER_SMOKE_TO: ${{ vars.TYPEDMAILER_SMOKE_TO }}
           TYPEDMAILER_RESEND_API_KEY: ${{ secrets.TYPEDMAILER_RESEND_API_KEY }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.TYPEDMAILER_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.TYPEDMAILER_AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.TYPEDMAILER_AWS_SESSION_TOKEN }}
           AWS_REGION: ${{ vars.TYPEDMAILER_AWS_REGION }}
