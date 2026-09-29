@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added an optional `maxBodyBytes` check that rejects oversized webhook payloads before JSON parsing.
+- Aligned `MailAddress` optional-name typing with the runtime schema and removed redundant address casts.
+
 ## 1.2.0 - 2026-09-29
 
 - Added an optional aggregate `maxAttachmentBytes` guard that measures UTF-8 text and binary attachment bytes before loading the provider.

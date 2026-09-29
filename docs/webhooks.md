@@ -4,7 +4,7 @@ TypedMailer exposes `verifyWebhook()` from `typedmailer/webhooks`. It authentica
 
 ## Raw request bodies
 
-Pass the exact bytes received by your HTTP framework. Parsing JSON and serializing it again changes the signed input and causes verification to fail. `rawBody` accepts a string or `Uint8Array`; `headers` is a case-insensitive record of request header names and values. If the framework parses request bodies automatically, configure a raw-body capture before its JSON parser.
+Pass the exact bytes received by your HTTP framework. Parsing JSON and serializing it again changes the signed input and causes verification to fail. `rawBody` accepts a string or `Uint8Array`; `headers` is a case-insensitive record of request header names and values. If the framework parses request bodies automatically, configure a raw-body capture before its JSON parser. Apply an HTTP request-body size limit before buffering the body. You can also set `maxBodyBytes` on `verifyWebhook()` to reject an oversized payload before JSON parsing; it has no default because provider event batches vary in size.
 
 ## Authentication configuration
 

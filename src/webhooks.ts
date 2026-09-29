@@ -20,6 +20,14 @@ export { WebhookVerificationError } from './webhooks/types.js';
 
 /** Authenticates a provider webhook before returning normalized, typed email events. */
 export async function verifyWebhook(input: VerifyWebhookInput): Promise<readonly EmailWebhookEvent[]> {
+  const rawBodyByteLength =
+    typeof input.rawBody === 'string' ? Buffer.byteLength(input.rawBody) : input.rawBody.byteLength;
+  if (
+    input.maxBodyBytes !== undefined &&
+    (!Number.isSafeInteger(input.maxBodyBytes) || input.maxBodyBytes < 1 || rawBodyByteLength > input.maxBodyBytes)
+  ) {
+    throw new WebhookVerificationError('invalid_payload');
+  }
   const rawBody = Buffer.from(input.rawBody);
   let payload: unknown;
   try {
