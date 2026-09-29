@@ -1,6 +1,6 @@
 # Contributing
 
-Issues and pull requests are welcome. For provider changes, describe capability differences and preserve the common API's predictable behavior.
+Issues and pull requests are welcome. For built-in provider changes, describe capability differences and preserve the common API's predictable behavior. Applications can integrate other services through the public `ProviderAdapter` interface without adding a built-in adapter.
 
 Use the [branching and release strategy](docs/branching-strategy.md) for branch names, pull request targets, and release merges.
 
@@ -12,7 +12,7 @@ Before opening a pull request:
 4. Update the README when public behavior or setup changes.
 5. Update `CHANGELOG.md` for user-visible behavior or public API changes. Follow `RELEASING.md` for version and publication steps.
 
-The CI package matrix runs the full `npm run check` gate on Node.js 22 and 24 using the lockfile's provider SDK versions. A separate floor job derives each minimum supported SDK version from the lower bound in `peerDependencies`, installs that set, then reruns typecheck, tests, and build. Keep `devDependencies` peer ranges equal to `peerDependencies`; `npm run provider:peer-floor` checks this before installation. The packed-package smoke check installs the tarball with optional peers omitted, then compiles an external TypeScript consumer against every provider option and public result/error type, including webhook exports. This covers current and minimum SDK versions plus installation without provider SDKs. Node.js 26 runs as a non-blocking compatibility check.
+The CI package matrix runs the full `npm run check` gate on Node.js 22 and 24 using the lockfile's provider SDK versions. A separate floor job derives each minimum supported SDK version from the lower bound in `peerDependencies`, installs that set, then reruns typecheck, tests, and build. Keep `devDependencies` peer ranges equal to `peerDependencies`; `npm run provider:peer-floor` checks this before installation. The packed-package smoke check installs the tarball with optional peers omitted, then compiles an external TypeScript consumer against every provider option, custom adapters, and public result/error types, including webhook exports. This covers current and minimum SDK versions plus installation without provider SDKs. Node.js 26 runs as a non-blocking compatibility check.
 
 The SES/SNS signature unit test generates a short-lived local certificate with the OpenSSL command line tool. Install OpenSSL to run the complete test suite locally.
 
