@@ -110,7 +110,7 @@
     "postmark": ">=5.0.0 <6",
     "prettier": "^3.9.9",
     "resend": ">=6.0.0 <7",
-    "typescript": "^5.9.2",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.70.1",
     "vitest": "^5.0.2"
   },
