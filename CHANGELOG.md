@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.0.0 - Unreleased
+## 1.0.1 - Unreleased
+
+- Removed the non-English README section for a consistent English-language package experience.
+
+## 1.0.0 - 2026-09-29
 
 - Corrected provider result types for all supported sending adapters and test adapter results.
 - Added matching runtime validation to the test mailer and defined close lifecycle behavior.

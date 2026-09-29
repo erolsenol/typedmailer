@@ -240,10 +240,6 @@ Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) fo
 
 After cloning, run `npm ci` to install dependencies and enable the local Git hooks. Commits run staged-file lint and format checks plus unit tests. Pushes run the full `npm run check` quality gate, including an isolated npm tarball consumer smoke test; GitHub Actions runs it on Node.js 22 and 24 and audits dependencies before merge and publish.
 
-## Türkçe kısa başlangıç
-
-TypedMailer, Node.js sunucu uygulamalarında Resend, Brevo, Postmark, SendGrid, Mailgun, Amazon SES veya SMTP ile e-posta göndermek için ortak ve tip güvenli bir API sunar. Şablonlar, kuyruk ve tekrar deneme politikaları uygulamanızda kalır. Seçtiğiniz sağlayıcının SDK'sını TypedMailer ile birlikte yükleyin. API anahtarlarını yalnızca sunucu ortamında tutun.
-
 ## License
 
 MIT © 2026 Erol Senol
