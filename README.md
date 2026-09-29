@@ -17,6 +17,8 @@ TypedMailer is a type-safe email library for Node.js and TypeScript applications
 
 Use TypedMailer when you want to switch email providers without coupling application code to a provider SDK. Provider SDKs are optional peer dependencies, and only the selected adapter is loaded.
 
+The separate `typedmailer/webhooks` entry point verifies and normalizes inbound provider events. It does not provide HTTP routing, persistence, or event processing.
+
 ## Install
 
 Install the `typedmailer` npm package with the provider SDK you plan to use:
@@ -45,6 +47,8 @@ TypedMailer is for trusted server-side Node.js runtimes. It is not intended for 
 
 ## Quick start
 
+Want to try TypedMailer without provider credentials? Follow the [local Mailpit quick start](docs/quickstart.md).
+
 ```ts
 import { createMailer } from 'typedmailer';
 
@@ -54,15 +58,18 @@ const mailer = createMailer({
   from: 'Example App <noreply@example.com>',
 });
 
-const result = await mailer.send({
-  to: 'person@example.com',
-  subject: 'Welcome',
-  text: 'Your account is ready.',
-  html: '<p>Your account is ready.</p>',
-});
+try {
+  const result = await mailer.send({
+    to: 'person@example.com',
+    subject: 'Welcome',
+    text: 'Your account is ready.',
+    html: '<p>Your account is ready.</p>',
+  });
 
-console.log(result.messageId);
-await mailer.close();
+  console.log(result.messageId);
+} finally {
+  await mailer.close();
+}
 ```
 
 ## Providers
@@ -195,6 +202,10 @@ console.log(mailer.sent[0]);
 
 Messages captured by `createTestMailer` return `provider: 'test'` so test results are not mistaken for SMTP deliveries.
 
+## Verify provider webhooks
+
+Use `verifyWebhook` from `typedmailer/webhooks` to authenticate a raw request and receive normalized events. Your HTTP route remains responsible for preserving the raw body, responding to the provider, deduplicating events durably, and applying application changes. See [Webhook verification](docs/webhooks.md) for provider-specific configuration and security requirements.
+
 ## Runnable examples
 
 The repository includes complete Resend, Amazon SES, and local SMTP/Mailpit examples in [`examples/`](examples/). From a clone, copy `examples/.env.example` to `.env`, replace the example sender and recipient with addresses valid for your account, then install the SDK for the chosen provider:
@@ -221,7 +232,7 @@ Provider and transport failures are normalized as `MailError`, with `code`, `pro
 
 `retryable` is guidance from the normalized failure: recognized network failures and rate limits are retryable; API provider 5xx failures are retryable; authentication, configuration, unsupported, and SMTP 5xx failures are not. `deliveryUnknown` is separate: it is true when a send timeout/socket interruption, a provider 5xx, or an accepted response without a message ID means the provider may have accepted the message without returning a clear result. It stays false for verification failures, DNS lookup failures, authentication errors, rate limits, and SMTP response errors. This does not guarantee that retrying is safe. Use provider-supported idempotency where available and apply retry policy in your application. `cause` retains the original SDK error for diagnostics and can contain provider details; avoid logging it without reviewing your data handling policy.
 
-A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Delivery, bounce, and complaint events require provider webhooks and are outside this package's current scope.
+A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Verify delivery, bounce, and complaint callbacks with [`typedmailer/webhooks`](docs/webhooks.md).
 
 `verifyConnection()` currently supports SMTP. API provider adapters report `unsupported` because they do not expose a side-effect-free credential check through this API; verify credentials with a controlled provider test message.
 
@@ -237,6 +248,8 @@ A successful `send()` means the provider accepted the request; it does not confi
 ## Contributing
 
 Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for development and contribution guidelines.
+
+Contributors are expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 After cloning, run `npm ci` to install dependencies and enable the local Git hooks. Commits run staged-file lint and format checks plus unit tests. Pushes run the full `npm run check` quality gate, including an isolated npm tarball consumer smoke test; GitHub Actions runs it on Node.js 22 and 24 and audits dependencies before merge and publish.
 

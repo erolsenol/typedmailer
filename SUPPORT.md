@@ -2,7 +2,7 @@
 
 ## Runtime support
 
-TypedMailer requires Node.js 22 or newer. CI tests Node.js 22 and 24. We support the latest patch release of each Node.js major that is still in its official maintenance or active LTS period; end-of-life Node.js releases are unsupported even when they satisfy the package engine range.
+TypedMailer requires Node.js 22 or newer. CI tests Node.js 22 and 24; Node.js 26 runs as a non-blocking compatibility canary while it is Current. We support the latest patch release of each Node.js major that is in its official maintenance or active LTS period; end-of-life Node.js releases are unsupported even when they satisfy the package engine range.
 
 Install the provider SDK required by your selected adapter. Provider SDKs are optional peer dependencies; see the [provider contracts](docs/provider-contracts.md) and README compatibility table.
 
