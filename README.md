@@ -39,6 +39,8 @@ npm install typedmailer @aws-sdk/client-sesv2
 
 Requires Node.js 22 or newer. Provider SDKs are optional peers and are loaded only when their adapter is selected.
 
+Supported runtime and release guarantees are documented in [`SUPPORT.md`](SUPPORT.md). Provider behavior guarantees and their test coverage are described in [`docs/provider-contracts.md`](docs/provider-contracts.md). The scheduled and manual provider smoke workflow is documented in [`docs/integration-testing.md`](docs/integration-testing.md).
+
 TypedMailer is for trusted server-side Node.js runtimes. It is not intended for browser or mobile client bundles.
 
 ## Quick start

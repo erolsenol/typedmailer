@@ -27,6 +27,9 @@
     "README.md",
     "LICENSE",
     "SECURITY.md",
+    "SUPPORT.md",
+    "docs/provider-contracts.md",
+    "docs/integration-testing.md",
     "CODE_OF_CONDUCT.md"
   ],
   "scripts": {
@@ -39,6 +42,7 @@
     "examples:check": "node --check examples/resend.mjs && node --check examples/ses.mjs && node --check examples/smtp-mailpit.mjs",
     "security:audit": "npm audit --audit-level=high",
     "package:smoke": "node scripts/package-smoke.mjs",
+    "integration:smoke": "node scripts/live-provider-smoke.mjs",
     "pack:check": "npm pack --dry-run --ignore-scripts && npm run package:smoke",
     "check": "npm run lint && npm run format:check && npm run test && npm run typecheck && npm run examples:check && npm run build && npm run pack:check",
     "prepare": "npm run build && husky"

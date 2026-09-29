@@ -20,26 +20,33 @@ function run(command, args, options = {}) {
 }
 
 try {
-  const packOutput = run(
-    npmCommand,
-    [...npmPrefixArgs, 'pack', '--json', '--ignore-scripts', '--pack-destination', tempRoot],
-    { cwd: projectRoot },
-  );
-  const packMetadata = JSON.parse(packOutput);
-  const pack = Array.isArray(packMetadata)
-    ? packMetadata[0]
-    : typeof packMetadata.filename === 'string'
-      ? packMetadata
-      : Object.values(packMetadata)[0];
-  assert.ok(pack?.filename, 'npm pack did not report a tarball');
+  const packageSpec = process.env.TYPEDMAILER_PACKAGE_SPEC;
+  let installTarget = packageSpec;
+  if (!packageSpec) {
+    const packOutput = run(
+      npmCommand,
+      [...npmPrefixArgs, 'pack', '--json', '--ignore-scripts', '--pack-destination', tempRoot],
+      { cwd: projectRoot },
+    );
+    const packMetadata = JSON.parse(packOutput);
+    const pack = Array.isArray(packMetadata)
+      ? packMetadata[0]
+      : typeof packMetadata.filename === 'string'
+        ? packMetadata
+        : Object.values(packMetadata)[0];
+    assert.ok(pack?.filename, 'npm pack did not report a tarball');
 
-  const packedFiles = new Set(pack.files.map((file) => file.path));
-  assert.ok(packedFiles.has('dist/index.js'), 'root ESM entry is missing from the package');
-  assert.ok(packedFiles.has('dist/testing.js'), 'testing ESM entry is missing from the package');
-  assert.ok(packedFiles.has('README.md'), 'README is missing from the package');
-  assert.ok(![...packedFiles].some((file) => file.startsWith('tests/') || file.startsWith('src/')));
-
-  const tarballPath = resolve(tempRoot, pack.filename);
+    const packedFiles = new Set(pack.files.map((file) => file.path));
+    assert.ok(packedFiles.has('dist/index.js'), 'root ESM entry is missing from the package');
+    assert.ok(packedFiles.has('dist/testing.js'), 'testing ESM entry is missing from the package');
+    assert.ok(packedFiles.has('README.md'), 'README is missing from the package');
+    assert.ok(packedFiles.has('SUPPORT.md'), 'support policy is missing from the package');
+    assert.ok(packedFiles.has('docs/provider-contracts.md'), 'provider contracts are missing from the package');
+    assert.ok(packedFiles.has('docs/integration-testing.md'), 'integration smoke guide is missing from the package');
+    assert.ok(![...packedFiles].some((file) => file.startsWith('tests/') || file.startsWith('src/')));
+    installTarget = resolve(tempRoot, pack.filename);
+  }
+  assert.ok(installTarget, 'no package install target was selected');
   run(
     npmCommand,
     [
@@ -51,7 +58,7 @@ try {
       '--no-audit',
       '--no-fund',
       '--omit=peer',
-      tarballPath,
+      installTarget,
     ],
     { cwd: projectRoot },
   );
@@ -129,7 +136,9 @@ try {
     ],
     { cwd: consumerRoot },
   );
-  process.stdout.write('Packed ESM and TypeScript consumer checks passed without optional provider peers.\n');
+  process.stdout.write(
+    `${packageSpec ? `Published package ${packageSpec}` : 'Packed package'} ESM and TypeScript consumer checks passed without optional provider peers.\n`,
+  );
 } finally {
   rmSync(tempRoot, { recursive: true, force: true });
 }
