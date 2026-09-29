@@ -39,10 +39,13 @@ try {
     const packedFiles = new Set(pack.files.map((file) => file.path));
     assert.ok(packedFiles.has('dist/index.js'), 'root ESM entry is missing from the package');
     assert.ok(packedFiles.has('dist/testing.js'), 'testing ESM entry is missing from the package');
+    assert.ok(packedFiles.has('dist/webhooks.js'), 'webhook ESM entry is missing from the package');
     assert.ok(packedFiles.has('README.md'), 'README is missing from the package');
     assert.ok(packedFiles.has('SUPPORT.md'), 'support policy is missing from the package');
     assert.ok(packedFiles.has('docs/provider-contracts.md'), 'provider contracts are missing from the package');
     assert.ok(packedFiles.has('docs/integration-testing.md'), 'integration smoke guide is missing from the package');
+    assert.ok(packedFiles.has('docs/quickstart.md'), 'quick start guide is missing from the package');
+    assert.ok(packedFiles.has('docs/webhooks.md'), 'webhook guide is missing from the package');
     assert.ok(![...packedFiles].some((file) => file.startsWith('tests/') || file.startsWith('src/')));
     installTarget = resolve(tempRoot, pack.filename);
   }
@@ -67,9 +70,12 @@ try {
     import assert from 'node:assert/strict';
     const api = await import('typedmailer');
     const testing = await import('typedmailer/testing');
+    const webhooks = await import('typedmailer/webhooks');
     assert.equal(typeof api.createMailer, 'function');
     assert.equal(typeof api.MailError, 'function');
     assert.equal(typeof testing.createTestMailer, 'function');
+    assert.equal(typeof webhooks.verifyWebhook, 'function');
+    assert.equal(typeof webhooks.WebhookVerificationError, 'function');
 
     const testMailer = testing.createTestMailer({ from: 'sender@example.test' });
     const result = await testMailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' });
@@ -98,7 +104,8 @@ try {
   writeFileSync(
     typeConsumer,
     `import { createMailer, MailError, type MailErrorCode, type MailErrorOptions, type MailerOptions, type ProviderName, type SendMailInput, type SendMailResult } from 'typedmailer';
-     import { createTestMailer } from 'typedmailer/testing';
+    import { createTestMailer } from 'typedmailer/testing';
+    import { verifyWebhook, type EmailWebhookEvent, type VerifyWebhookInput } from 'typedmailer/webhooks';
      const from = 'sender@example.test';
      const options: MailerOptions[] = [
        { provider: 'resend', apiKey: 'placeholder', from },
@@ -115,7 +122,10 @@ try {
      const errorCode: MailErrorCode = 'unsupported';
      const errorOptions: MailErrorOptions = { cause: new Error('original'), deliveryUnknown: true };
      new MailError('uncertain send', errorCode, provider, true, errorOptions);
-     void [provider, testResult];
+     const webhookInput: VerifyWebhookInput = { provider: 'resend', rawBody: '{}', headers: {}, webhookSecret: 'whsec_placeholder' };
+     const webhookEvent: EmailWebhookEvent = { provider: 'resend', id: 'event-1', type: 'delivered', eventType: 'email.delivered', raw: {} };
+     void [provider, testResult, webhookEvent];
+     verifyWebhook(webhookInput);
      for (const option of options) createMailer(option).send(message);
      createTestMailer({ from: 'sender@example.test' }).send(message);`,
   );

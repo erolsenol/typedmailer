@@ -2,11 +2,11 @@
 
 ## Positioning
 
-TypedMailer is a small, typed TypeScript API for sending server-side Node.js email through Resend, Brevo, or SMTP. It normalizes message input and provider errors while leaving templates, queues, retries, and business rules with the application.
+TypedMailer is a typed TypeScript API for server-side Node.js email delivery through Resend, Brevo, Postmark, SendGrid, Mailgun, Amazon SES, or SMTP. It normalizes message input and provider errors while leaving templates, queues, retries, and business rules with the application. Its webhook utility verifies and normalizes events from supported providers without owning HTTP routing or event processing.
 
 ## Messaging
 
-- **Tagline:** One typed API for sending Node.js email with Resend, Brevo, or SMTP.
+- **Tagline:** One typed API for sending Node.js email with seven providers.
 - **Short description:** Typed email delivery for Node.js.
 - **Voice:** Direct, practical, specific. Describe what the library does and state provider differences plainly. Do not promise inbox delivery when the provider only accepted a send request.
 
