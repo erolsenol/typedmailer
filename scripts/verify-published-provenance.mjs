@@ -21,7 +21,7 @@ function run(args) {
 try {
   writeFileSync(join(root, 'package.json'), JSON.stringify({ private: true, dependencies: { typedmailer: version } }));
   let lastMessage = '';
-  for (let attempt = 1; attempt <= 6; attempt += 1) {
+  for (let attempt = 1; attempt <= 18; attempt += 1) {
     const install = run(['install', '--ignore-scripts', '--no-audit', '--no-fund']);
     if (install.status === 0) {
       const audit = run(['audit', 'signatures', '--json', '--include-attestations']);
@@ -43,7 +43,7 @@ try {
       lastMessage = `npm install failed: ${install.stderr || install.stdout}`;
     }
 
-    if (attempt === 6) {
+    if (attempt === 18) {
       throw new Error(
         `${lastMessage}. Configure npm Trusted Publishing for this GitHub repository and workflow before releasing.`,
       );
