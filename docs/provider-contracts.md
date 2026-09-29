@@ -1,6 +1,6 @@
 # Provider behavior contracts
 
-The adapters provide one `createMailer(...).send(...)` interface, while provider APIs differ. This page records the behavior callers may rely on. The capability table in the README is the quick reference; adapter contract tests in `tests/provider-adapters.test.ts` are the executable mapping checks.
+The adapters provide one `createMailer(...).send(...)` interface, while provider APIs differ. This page records the behavior callers may rely on. The capability table in the README is the quick reference; built-in adapter contract tests are organized by provider under `tests/providers/`.
 
 ## Shared guarantees
 
@@ -28,3 +28,7 @@ Attachments are buffered for provider SDK requests. Configure `maxAttachmentByte
 ## Updating a provider adapter
 
 When changing an adapter, add its configuration schema and lazy loader in `src/providers/registry.ts`, keep its implementation in `src/providers/<provider>.ts`, and update the README capability table and this contract if caller-visible behavior changes. Add or adjust adapter tests for the provider payload, unsupported fields, returned message ID, and error normalization. Keep provider SDK versions within the declared peer range and verify both the locked SDK and minimum supported SDK set. CI derives the minimum-version install list from each peer range's explicit lower bound so the support metadata and compatibility check stay aligned.
+
+## Custom adapters
+
+Applications can provide a `ProviderAdapter<TName>` directly to `createMailer()` without adding a built-in provider. Its `send()` method receives `NormalizedMailInput`: `from` is always set, and `to`, `cc`, and `bcc` are arrays when present. Resolve with `{ messageId }` after the SDK accepts the message. `verifyConnection()` and `close()` are optional; verification rejects with `unsupported` when omitted, while close is a no-op. TypedMailer normalizes thrown errors and tags results with the adapter's name. The generic adapter name is preserved in `SendMailResult<TName>` for TypeScript callers. Custom adapters are responsible for documenting and enforcing unsupported message fields.

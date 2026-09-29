@@ -1,24 +1,90 @@
 import { Buffer } from 'node:buffer';
+import { z } from 'zod';
 import { MailError, normalizeProviderError } from './errors.js';
 import { mailInputSchema, normalizeAddresses } from './config.js';
-import { loadProvider, mailerOptionsSchema, type MailerOptions } from './providers/registry.js';
-import type { Mailer, MailProvider, NormalizedMailInput, SendMailInput, SendMailResult } from './types.js';
+import {
+  loadProvider,
+  mailerBaseOptionsSchema,
+  mailerOptionsSchema,
+  type MailerOptions as BuiltInMailerOptions,
+} from './providers/registry.js';
+import type {
+  CustomMailerOptions,
+  Mailer,
+  MailProvider,
+  NormalizedMailInput,
+  ProviderAdapter,
+  ProviderName,
+  SendMailInput,
+  SendMailResult,
+} from './types.js';
 
-export type { MailerOptions };
+export type MailerOptions = BuiltInMailerOptions | CustomMailerOptions;
 
-export function createMailer(input: MailerOptions): Mailer {
+function isProviderAdapter(value: unknown): value is ProviderAdapter {
+  if (typeof value !== 'object' || value === null) return false;
+  const adapter = value as Record<string, unknown>;
+  return (
+    typeof adapter.name === 'string' &&
+    adapter.name.length > 0 &&
+    adapter.name.trim() === adapter.name &&
+    typeof adapter.send === 'function' &&
+    (adapter.verifyConnection === undefined || typeof adapter.verifyConnection === 'function') &&
+    (adapter.close === undefined || typeof adapter.close === 'function')
+  );
+}
+
+const customMailerOptionsSchema = mailerBaseOptionsSchema
+  .extend({ provider: z.custom<ProviderAdapter>(isProviderAdapter, 'Invalid custom provider adapter.') })
+  .strict();
+
+function isCustomOptions(input: MailerOptions): input is CustomMailerOptions {
+  return typeof input.provider !== 'string';
+}
+
+function createCustomProvider(adapter: ProviderAdapter): MailProvider {
+  return {
+    send: (input) => adapter.send(input),
+    async verifyConnection() {
+      if (!adapter.verifyConnection) {
+        throw new MailError(
+          `Connection verification is not supported by the custom provider "${adapter.name}".`,
+          'unsupported',
+          adapter.name,
+          false,
+        );
+      }
+      await adapter.verifyConnection();
+    },
+    async close() {
+      await adapter.close?.();
+    },
+  };
+}
+
+export function createMailer<const TProvider extends string>(input: CustomMailerOptions<TProvider>): Mailer<TProvider>;
+export function createMailer(input: BuiltInMailerOptions): Mailer<ProviderName | 'test'>;
+export function createMailer(input: MailerOptions): Mailer<string>;
+export function createMailer(input: MailerOptions): Mailer<string> {
   let providerPromise: Promise<MailProvider> | undefined;
   let closed = false;
   let closePromise: Promise<void> | undefined;
   let activeOperations = 0;
   let resolveOperationsIdle: (() => void) | undefined;
-  const parsedOptions = mailerOptionsSchema.parse(input);
+  const parsedOptions = isCustomOptions(input)
+    ? customMailerOptionsSchema.parse(input)
+    : mailerOptionsSchema.parse(input);
+  const providerName =
+    typeof parsedOptions.provider === 'string' ? parsedOptions.provider : parsedOptions.provider.name;
   const assertOpen = (): void => {
-    if (closed) throw new MailError('Mailer has been closed.', 'configuration', parsedOptions.provider, false);
+    if (closed) throw new MailError('Mailer has been closed.', 'configuration', providerName, false);
   };
   const getProvider = (): Promise<MailProvider> => {
     assertOpen();
-    providerPromise ??= loadProvider(parsedOptions);
+    providerPromise ??=
+      typeof parsedOptions.provider === 'string'
+        ? loadProvider(parsedOptions)
+        : Promise.resolve(createCustomProvider(parsedOptions.provider));
     return providerPromise;
   };
   const runWithProvider = async <T>(operation: (provider: MailProvider) => Promise<T>): Promise<T> => {
@@ -36,7 +102,7 @@ export function createMailer(input: MailerOptions): Mailer {
   };
 
   return {
-    async send(input: SendMailInput): Promise<SendMailResult> {
+    async send(input: SendMailInput): Promise<SendMailResult<string>> {
       assertOpen();
       const parsed = mailInputSchema.parse(input);
       const attachmentBytes =
@@ -52,7 +118,7 @@ export function createMailer(input: MailerOptions): Mailer {
         throw new MailError(
           `Attachment content exceeds the configured limit of ${parsedOptions.maxAttachmentBytes} bytes.`,
           'configuration',
-          parsedOptions.provider,
+          providerName,
           false,
         );
       }
@@ -85,19 +151,19 @@ export function createMailer(input: MailerOptions): Mailer {
       try {
         const result = await runWithProvider((provider) => provider.send(normalized));
         return {
-          provider: parsedOptions.provider,
+          provider: providerName,
           messageId: result.messageId,
           acceptedAt: new Date(),
         };
       } catch (error) {
-        throw normalizeProviderError(error, parsedOptions.provider, 'send');
+        throw normalizeProviderError(error, providerName, 'send');
       }
     },
     async verifyConnection(): Promise<void> {
       try {
         await runWithProvider((provider) => provider.verifyConnection());
       } catch (error) {
-        throw normalizeProviderError(error, parsedOptions.provider);
+        throw normalizeProviderError(error, providerName);
       }
     },
     async close(): Promise<void> {
@@ -119,11 +185,14 @@ export function createMailer(input: MailerOptions): Mailer {
 export { MailError } from './errors.js';
 export type { MailErrorCode, MailErrorOperation, MailErrorOptions } from './errors.js';
 export type {
+  CustomMailerOptions,
   MailAddress,
   MailAttachment,
   Mailer,
   NormalizedMailInput,
+  ProviderAdapter,
   ProviderName,
+  ProviderSendResult,
   SendMailInput,
   SendMailResult,
 } from './types.js';

@@ -77,6 +77,13 @@ try {
     assert.equal(typeof webhooks.verifyWebhook, 'function');
     assert.equal(typeof webhooks.WebhookVerificationError, 'function');
 
+    const customMailer = api.createMailer({
+      provider: { name: 'smoke-provider', send: async () => ({ messageId: 'custom-1' }) },
+      from: 'sender@example.test',
+    });
+    assert.equal((await customMailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' })).provider, 'smoke-provider');
+    await customMailer.close();
+
     const testMailer = testing.createTestMailer({ from: 'sender@example.test' });
     const result = await testMailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' });
     assert.equal(result.messageId, 'test-1');
@@ -103,7 +110,7 @@ try {
   const typeConsumer = join(consumerRoot, 'consumer.ts');
   writeFileSync(
     typeConsumer,
-    `import { createMailer, MailError, type MailErrorCode, type MailErrorOptions, type MailerOptions, type ProviderName, type SendMailInput, type SendMailResult } from 'typedmailer';
+    `import { createMailer, MailError, type MailErrorCode, type MailErrorOptions, type MailerOptions, type ProviderAdapter, type ProviderName, type SendMailInput, type SendMailResult } from 'typedmailer';
     import { createTestMailer } from 'typedmailer/testing';
     import { verifyWebhook, type EmailWebhookEvent, type VerifyWebhookInput } from 'typedmailer/webhooks';
      const from = 'sender@example.test';
@@ -116,6 +123,9 @@ try {
        { provider: 'ses', region: 'us-east-1', from },
        { provider: 'smtp', host: '127.0.0.1', port: 1025, secure: false, from },
      ];
+     const customAdapter: ProviderAdapter<'custom-consumer'> = { name: 'custom-consumer', send: async () => ({ messageId: 'custom-id' }) };
+     const customMailer = createMailer({ provider: customAdapter, from });
+     const customResult: Promise<SendMailResult<'custom-consumer'>> = customMailer.send({ to: from, subject: 'Custom', text: 'Hello' });
      const message: SendMailInput = { to: 'reader@example.test', subject: 'Hello', text: 'Hi' };
      const provider: ProviderName = 'ses';
      const testResult: SendMailResult = { provider: 'test', messageId: 'test-1', acceptedAt: new Date() };
@@ -126,6 +136,7 @@ try {
      const webhookEvent: EmailWebhookEvent = { provider: 'resend', id: 'event-1', type: 'delivered', eventType: 'email.delivered', raw: {} };
      void [provider, testResult, webhookEvent];
      verifyWebhook(webhookInput);
+     void customResult;
      for (const option of options) createMailer(option).send(message);
      createTestMailer({ from: 'sender@example.test' }).send(message);`,
   );

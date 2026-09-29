@@ -6,7 +6,7 @@ export interface CapturedMail extends SendMailInput {
   readonly from: NonNullable<SendMailInput['from']>;
 }
 
-export interface TestMailer extends Mailer {
+export interface TestMailer extends Mailer<'test'> {
   readonly sent: CapturedMail[];
   clear(): void;
 }
@@ -23,7 +23,7 @@ export function createTestMailer(options: { from: NonNullable<SendMailInput['fro
     clear() {
       sent.length = 0;
     },
-    async send(input): Promise<SendMailResult> {
+    async send(input): Promise<SendMailResult<'test'>> {
       assertOpen();
       const message = { ...input, from: input.from ?? options.from };
       mailInputSchema.parse(message);

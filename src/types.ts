@@ -25,18 +25,31 @@ export interface SendMailInput {
 
 export type ProviderName = 'resend' | 'brevo' | 'smtp' | 'postmark' | 'sendgrid' | 'mailgun' | 'ses';
 
-export interface SendMailResult {
-  readonly provider: ProviderName | 'test';
+export interface SendMailResult<TProvider extends string = ProviderName | 'test'> {
+  readonly provider: TProvider;
   readonly messageId: string;
   /** Time when the provider accepted the request. This does not confirm inbox delivery. */
   readonly acceptedAt: Date;
 }
 
-export interface Mailer {
-  send(input: SendMailInput): Promise<SendMailResult>;
+export interface Mailer<TProvider extends string = ProviderName | 'test'> {
+  send(input: SendMailInput): Promise<SendMailResult<TProvider>>;
   verifyConnection(): Promise<void>;
   /** Rejects new operations, waits for active operations, and closes the provider at most once. */
   close(): Promise<void>;
+}
+
+export interface ProviderAdapter<TProvider extends string = string> {
+  readonly name: TProvider;
+  send(input: NormalizedMailInput): Promise<ProviderSendResult>;
+  verifyConnection?(): Promise<void>;
+  close?(): Promise<void> | void;
+}
+
+export interface CustomMailerOptions<TProvider extends string = string> {
+  readonly provider: ProviderAdapter<TProvider>;
+  readonly from: MailAddress;
+  readonly maxAttachmentBytes?: number;
 }
 
 export interface NormalizedMailInput extends Omit<SendMailInput, 'from' | 'to' | 'cc' | 'bcc' | 'replyTo'> {

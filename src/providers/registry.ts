@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { MailError } from '../errors.js';
 import type { MailProvider } from '../types.js';
 
-const baseOptions = z.object({
+export const mailerBaseOptionsSchema = z.object({
   from: z.union([
     z.string().email(),
     z.string().regex(/^.+ <[^<>\s]+@[^<>\s]+>$/, 'Use a valid email address or "Name <email@example.com>".'),
@@ -13,18 +13,18 @@ const baseOptions = z.object({
 });
 
 export const providerOptions = {
-  resend: baseOptions.extend({ provider: z.literal('resend'), apiKey: z.string().min(1) }),
-  brevo: baseOptions.extend({ provider: z.literal('brevo'), apiKey: z.string().min(1) }),
-  postmark: baseOptions.extend({ provider: z.literal('postmark'), apiKey: z.string().min(1) }),
-  sendgrid: baseOptions.extend({ provider: z.literal('sendgrid'), apiKey: z.string().min(1) }),
-  mailgun: baseOptions.extend({
+  resend: mailerBaseOptionsSchema.extend({ provider: z.literal('resend'), apiKey: z.string().min(1) }),
+  brevo: mailerBaseOptionsSchema.extend({ provider: z.literal('brevo'), apiKey: z.string().min(1) }),
+  postmark: mailerBaseOptionsSchema.extend({ provider: z.literal('postmark'), apiKey: z.string().min(1) }),
+  sendgrid: mailerBaseOptionsSchema.extend({ provider: z.literal('sendgrid'), apiKey: z.string().min(1) }),
+  mailgun: mailerBaseOptionsSchema.extend({
     provider: z.literal('mailgun'),
     apiKey: z.string().min(1),
     domain: z.string().min(1),
     region: z.enum(['us', 'eu']).default('us'),
   }),
-  ses: baseOptions.extend({ provider: z.literal('ses'), region: z.string().min(1) }),
-  smtp: baseOptions
+  ses: mailerBaseOptionsSchema.extend({ provider: z.literal('ses'), region: z.string().min(1) }),
+  smtp: mailerBaseOptionsSchema
     .extend({
       provider: z.literal('smtp'),
       host: z.string().min(1),
