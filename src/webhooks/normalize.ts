@@ -44,8 +44,10 @@ export function normalizeMailgun(payload: unknown): readonly EmailWebhookEvent[]
   ];
 }
 
-export function normalizeSendGrid(payload: unknown): readonly EmailWebhookEvent[] {
-  if (!Array.isArray(payload)) throw new WebhookVerificationError('invalid_payload');
+export function normalizeSendGrid(payload: unknown, maxEvents: number): readonly EmailWebhookEvent[] {
+  if (!Array.isArray(payload) || payload.length > maxEvents) {
+    throw new WebhookVerificationError('invalid_payload');
+  }
   return payload.map((item) => {
     const event = asRecord(item);
     const eventName = asString(event.event);
@@ -60,7 +62,7 @@ export function normalizeSendGrid(payload: unknown): readonly EmailWebhookEvent[
   });
 }
 
-export function normalizeSes(payload: unknown): readonly EmailWebhookEvent[] {
+export function normalizeSes(payload: unknown, maxEvents: number): readonly EmailWebhookEvent[] {
   const message = asRecord(payload);
   const eventName = asString(message.eventType) ?? asString(message.notificationType);
   const mail = asRecord(message.mail);
@@ -72,6 +74,12 @@ export function normalizeSes(payload: unknown): readonly EmailWebhookEvent[] {
     : Array.isArray(complaint?.complainedRecipients)
       ? complaint.complainedRecipients
       : [];
+  if (
+    recipients.length > maxEvents ||
+    (!recipients.length && Array.isArray(mail.destination) && mail.destination.length > maxEvents)
+  ) {
+    throw new WebhookVerificationError('invalid_payload');
+  }
   const to = recipients.map((recipient) => asString(asRecord(recipient).emailAddress)).filter(isString);
   const emails = to.length > 0 ? to : asStringArray(mail.destination);
   return emails.length > 0
@@ -99,8 +107,10 @@ export function normalizeSes(payload: unknown): readonly EmailWebhookEvent[] {
 export function normalizeProviderEvents(
   provider: 'brevo' | 'postmark',
   payload: unknown,
+  maxEvents: number,
 ): readonly EmailWebhookEvent[] {
   const items = Array.isArray(payload) ? payload : [payload];
+  if (items.length > maxEvents) throw new WebhookVerificationError('invalid_payload');
   return items.map((item) => {
     const event = asRecord(item);
     const eventName = provider === 'brevo' ? asString(event.event) : asString(event.RecordType);

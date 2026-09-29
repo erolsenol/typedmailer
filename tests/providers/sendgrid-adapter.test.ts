@@ -68,6 +68,7 @@ describe('SendGrid adapter', () => {
       code: 'provider',
       provider: 'sendgrid',
       retryable: false,
+      deliveryUnknown: true,
     });
   });
 });

@@ -15,6 +15,9 @@ import {
   normalizeSes,
 } from './webhooks/normalize.js';
 
+const DEFAULT_MAX_BODY_BYTES = 1_048_576;
+const DEFAULT_MAX_EVENTS = 1_000;
+
 export type { EmailWebhookEvent, EmailWebhookEventType, VerifyWebhookInput, WebhookHeaders } from './webhooks/types.js';
 export { WebhookVerificationError } from './webhooks/types.js';
 
@@ -22,10 +25,12 @@ export { WebhookVerificationError } from './webhooks/types.js';
 export async function verifyWebhook(input: VerifyWebhookInput): Promise<readonly EmailWebhookEvent[]> {
   const rawBodyByteLength =
     typeof input.rawBody === 'string' ? Buffer.byteLength(input.rawBody) : input.rawBody.byteLength;
-  if (
-    input.maxBodyBytes !== undefined &&
-    (!Number.isSafeInteger(input.maxBodyBytes) || input.maxBodyBytes < 1 || rawBodyByteLength > input.maxBodyBytes)
-  ) {
+  const maxBodyBytes = input.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
+  if (!Number.isSafeInteger(maxBodyBytes) || maxBodyBytes < 1 || rawBodyByteLength > maxBodyBytes) {
+    throw new WebhookVerificationError('invalid_payload');
+  }
+  const maxEvents = input.maxEvents ?? DEFAULT_MAX_EVENTS;
+  if (!Number.isSafeInteger(maxEvents) || maxEvents < 1) {
     throw new WebhookVerificationError('invalid_payload');
   }
   const rawBody = Buffer.from(input.rawBody);
@@ -45,12 +50,12 @@ export async function verifyWebhook(input: VerifyWebhookInput): Promise<readonly
       return normalizeMailgun(payload);
     case 'sendgrid':
       verifySendGrid(input, rawBody);
-      return normalizeSendGrid(payload);
+      return normalizeSendGrid(payload, maxEvents);
     case 'brevo':
     case 'postmark':
       verifyAuthorization(input, input.authorizationHeader ?? 'authorization');
-      return normalizeProviderEvents(input.provider, payload);
+      return normalizeProviderEvents(input.provider, payload, maxEvents);
     case 'ses':
-      return normalizeSes(await verifySnsNotification(input, payload));
+      return normalizeSes(await verifySnsNotification(input, payload), maxEvents);
   }
 }

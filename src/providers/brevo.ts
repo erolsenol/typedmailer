@@ -62,7 +62,7 @@ export function createBrevoProvider(options: { apiKey: string }): MailProvider {
         }
         return { messageId: result.messageId };
       } catch (error) {
-        throw normalizeProviderError(error, 'brevo');
+        throw normalizeProviderError(error, 'brevo', 'send');
       }
     },
     async verifyConnection() {

@@ -80,4 +80,14 @@ describe('Amazon SES adapter', () => {
       retryable: true,
     });
   });
+
+  it('marks an accepted response without a message ID as delivery-unknown', async () => {
+    mocks.sesSend.mockResolvedValue({});
+    const mailer = createMailer({ provider: 'ses', region: 'us-east-1', from: 'sender@example.com' });
+
+    await expect(mailer.send({ to: 'reader@example.com', subject: 'Hello', text: 'Hi' })).rejects.toMatchObject({
+      provider: 'ses',
+      deliveryUnknown: true,
+    });
+  });
 });

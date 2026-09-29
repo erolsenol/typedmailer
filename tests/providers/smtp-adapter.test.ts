@@ -119,6 +119,38 @@ describe('SMTP adapter', () => {
     await mailer.close();
   });
 
+  it('allows requiring STARTTLS on SMTP ports other than 587', async () => {
+    mocks.smtpSendMail.mockResolvedValue({ messageId: '<smtp-message>' });
+    const mailer = createMailer({
+      provider: 'smtp',
+      host: 'smtp.example.com',
+      port: 2525,
+      secure: false,
+      requireTLS: true,
+      from: 'sender@example.com',
+    });
+
+    await mailer.send({ to: 'reader@example.com', subject: 'Hello', text: 'Hi' });
+
+    expect(mocks.smtpTransportOptions).toHaveBeenCalledWith(expect.objectContaining({ requireTLS: true }));
+  });
+
+  it('marks an accepted response without a message ID as delivery-unknown', async () => {
+    mocks.smtpSendMail.mockResolvedValue({});
+    const mailer = createMailer({
+      provider: 'smtp',
+      host: 'smtp.example.com',
+      port: 465,
+      secure: true,
+      from: 'sender@example.com',
+    });
+
+    await expect(mailer.send({ to: 'reader@example.com', subject: 'Hello', text: 'Hi' })).rejects.toMatchObject({
+      provider: 'smtp',
+      deliveryUnknown: true,
+    });
+  });
+
   it('rejects unsupported metadata and normalizes transport errors', async () => {
     const mailer = createMailer({
       provider: 'smtp',

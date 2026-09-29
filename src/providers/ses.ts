@@ -71,7 +71,7 @@ export function createSesProvider(options: SesOptions): MailProvider {
         }
         return { messageId: response.MessageId };
       } catch (error) {
-        throw normalizeProviderError(error, 'ses');
+        throw normalizeProviderError(error, 'ses', 'send');
       }
     },
     async verifyConnection() {
