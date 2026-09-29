@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.4.0 - 2026-09-29
+
 - Preserve `deliveryUnknown` when provider adapters normalize send responses that omit a message ID.
 - Add default 1 MiB webhook body and 1,000 event limits, with finite per-request overrides.
 - Allow SMTP STARTTLS to be required on any port and document production TLS settings.
