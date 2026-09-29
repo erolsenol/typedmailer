@@ -1,6 +1,6 @@
 # Integration smoke workflow
 
-The `Provider integration smoke` workflow runs weekly or manually. It is intentionally separate from pull request CI. It always sends one message to an isolated Mailpit service; this does not contact a real mailbox.
+Pull request CI runs a Mailpit integration job with a pinned service image. It verifies SMTP acceptance and then checks Mailpit's REST API for the unique message, recipient, subject, and body. This does not contact a real mailbox. The separate `Provider integration smoke` workflow also runs weekly or manually and always sends one message to an isolated Mailpit service.
 
 The workflow can also send controlled live messages through Resend or Amazon SES. To enable one, set the repository variable `TYPEDMAILER_INTEGRATION_PROVIDERS` to a comma-separated list such as `mailpit,resend` or `mailpit,ses`, then configure the following values:
 

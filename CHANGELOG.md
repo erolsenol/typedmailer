@@ -6,6 +6,8 @@
 - Added provider webhook authentication and normalized event types for Resend, Mailgun, SendGrid, Brevo, Postmark, and Amazon SES/SNS.
 - Added release-time verification that the published npm package has a provenance attestation.
 - Added a non-blocking Node.js 26 compatibility canary.
+- Added a first-message Mailpit quick start and CI integration coverage that verifies the captured message through Mailpit's API.
+- Added positive and tampered-message SES/SNS signature verification coverage.
 
 ## 1.0.0 - 2026-09-29
 

@@ -44,6 +44,7 @@ try {
     assert.ok(packedFiles.has('SUPPORT.md'), 'support policy is missing from the package');
     assert.ok(packedFiles.has('docs/provider-contracts.md'), 'provider contracts are missing from the package');
     assert.ok(packedFiles.has('docs/integration-testing.md'), 'integration smoke guide is missing from the package');
+    assert.ok(packedFiles.has('docs/quickstart.md'), 'quick start guide is missing from the package');
     assert.ok(packedFiles.has('docs/webhooks.md'), 'webhook guide is missing from the package');
     assert.ok(![...packedFiles].some((file) => file.startsWith('tests/') || file.startsWith('src/')));
     installTarget = resolve(tempRoot, pack.filename);

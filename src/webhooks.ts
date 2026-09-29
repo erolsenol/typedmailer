@@ -306,11 +306,12 @@ function normalizeSes(payload: unknown): readonly EmailWebhookEvent[] {
   const message = asRecord(payload);
   const eventName = asString(message.eventType) ?? asString(message.notificationType);
   const mail = asRecord(message.mail);
-  const bounce = asRecord(message.bounce);
-  const complaint = asRecord(message.complaint);
-  const recipients = Array.isArray(bounce.bouncedRecipients)
+  const bounce = asOptionalRecord(message.bounce);
+  const complaint = asOptionalRecord(message.complaint);
+  const delivery = asOptionalRecord(message.delivery);
+  const recipients = Array.isArray(bounce?.bouncedRecipients)
     ? bounce.bouncedRecipients
-    : Array.isArray(complaint.complainedRecipients)
+    : Array.isArray(complaint?.complainedRecipients)
       ? complaint.complainedRecipients
       : [];
   const to = recipients.map((recipient) => asString(asRecord(recipient).emailAddress)).filter(isString);
@@ -323,7 +324,7 @@ function normalizeSes(payload: unknown): readonly EmailWebhookEvent[] {
           type: mapEventType(eventName),
           messageId: asString(mail.messageId),
           recipient,
-          occurredAt: parseDate(asRecord(message.delivery).timestamp) ?? parseDate(asRecord(message.bounce).timestamp),
+          occurredAt: parseDate(delivery?.timestamp) ?? parseDate(bounce?.timestamp),
         }),
       )
     : [
@@ -477,6 +478,12 @@ function asRecord(value: unknown): Record<string, unknown> {
     throw new WebhookVerificationError('invalid_payload');
   }
   return value as Record<string, unknown>;
+}
+
+function asOptionalRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
 }
 
 function asString(value: unknown): string | undefined {

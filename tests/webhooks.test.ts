@@ -1,4 +1,8 @@
 import { createHmac, generateKeyPairSync, sign } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { verifyWebhook } from '../src/webhooks.js';
 
@@ -180,6 +184,105 @@ describe('verifyWebhook', () => {
         now,
       }),
     ).rejects.toMatchObject({ code: 'invalid_signature' });
+  });
+
+  it('verifies a signed Amazon SNS SES notification and rejects a modified signed message', async () => {
+    const fixtureDirectory = mkdtempSync(join(tmpdir(), 'typedmailer-sns-test-'));
+    try {
+      const keyPath = join(fixtureDirectory, 'key.pem');
+      const certificatePath = join(fixtureDirectory, 'certificate.pem');
+      const generated = spawnSync(
+        'openssl',
+        [
+          'req',
+          '-x509',
+          '-newkey',
+          'rsa:2048',
+          '-keyout',
+          keyPath,
+          '-out',
+          certificatePath,
+          '-sha256',
+          '-days',
+          '2',
+          '-nodes',
+          '-subj',
+          '/CN=Amazon SNS',
+        ],
+        { encoding: 'utf8' },
+      );
+      expect(generated.status, generated.stderr).toBe(0);
+      const certificate = readFileSync(certificatePath, 'utf8');
+      const privateKey = readFileSync(keyPath, 'utf8');
+      const snsNow = new Date();
+      const topicArn = 'arn:aws:sns:us-east-1:123456789012:mail-events';
+      const sesEvent = {
+        eventType: 'Delivery',
+        mail: {
+          messageId: 'ses-message-1',
+          destination: ['reader@example.test'],
+        },
+        delivery: { timestamp: snsNow.toISOString() },
+      };
+      const envelope = {
+        Type: 'Notification',
+        MessageId: 'sns-message-1',
+        TopicArn: topicArn,
+        Message: JSON.stringify(sesEvent),
+        Timestamp: snsNow.toISOString(),
+        SignatureVersion: '2',
+        SigningCertURL: 'https://sns.us-east-1.amazonaws.com/SimpleNotificationService-test.pem',
+      };
+      const stringToSign =
+        [
+          'Message',
+          envelope.Message,
+          'MessageId',
+          envelope.MessageId,
+          'Timestamp',
+          envelope.Timestamp,
+          'TopicArn',
+          envelope.TopicArn,
+          'Type',
+          envelope.Type,
+        ].join('\n') + '\n';
+      const signature = sign('sha256', Buffer.from(stringToSign), privateKey).toString('base64');
+      const fetchMock = vi.fn(async () => new Response(certificate, { status: 200 }));
+      vi.stubGlobal('fetch', fetchMock);
+      try {
+        const events = await verifyWebhook({
+          provider: 'ses',
+          rawBody: JSON.stringify({ ...envelope, Signature: signature }),
+          headers: {},
+          topicArn,
+          now: snsNow,
+        });
+        expect(events[0]).toMatchObject({
+          provider: 'ses',
+          type: 'delivered',
+          messageId: 'ses-message-1',
+          recipient: 'reader@example.test',
+        });
+
+        await expect(
+          verifyWebhook({
+            provider: 'ses',
+            rawBody: JSON.stringify({
+              ...envelope,
+              Message: JSON.stringify({ ...sesEvent, eventType: 'Bounce' }),
+              Signature: signature,
+            }),
+            headers: {},
+            topicArn,
+            now: snsNow,
+          }),
+        ).rejects.toMatchObject({ code: 'invalid_signature' });
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    } finally {
+      rmSync(fixtureDirectory, { recursive: true, force: true });
+    }
   });
 
   it('rejects mismatched configured authorization values', async () => {
