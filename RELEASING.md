@@ -21,6 +21,6 @@ Before each release:
 3. Run `npm ci`, `RELEASE_TAG=vX.Y.Z npm run release:check`, `npm run check`, `npm run security:audit`, and `npm pack --dry-run`. Confirm the Mailpit integration job passes in CI.
 4. Commit the release changes and push a `vX.Y.Z` tag that points to that exact commit.
 5. Publish a GitHub Release for the tag. The workflow repeats the preflight and package checks, publishes with npm OIDC, and verifies the published version's provenance attestation.
-6. Confirm the workflow completed and npm signature audit reports provenance for that exact version before announcing it. A GitHub Release or successful `npm publish` step alone is not provenance evidence.
+6. Confirm the workflow completed and npm signature audit reports provenance for that exact version before announcing it. If the publish workflow exhausts its registry propagation retries, run the `Verify published npm provenance` workflow with the same version; it checks the existing package and does not publish again. A GitHub Release or successful `npm publish` step alone is not provenance evidence.
 
 Never put an npm write token in the repository or workflow secrets when trusted publishing is configured. npm package visibility is public; keep provider credentials and npm credentials out of package contents and Git history.
