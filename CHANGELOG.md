@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 - 2026-09-29
+
+- Added an optional aggregate `maxAttachmentBytes` guard that measures UTF-8 text and binary attachment bytes before loading the provider.
+- Moved provider schemas and lazy adapter loading into a dedicated registry module to make provider additions easier to maintain.
+- Split webhook contracts, signature verification, shared parsing helpers, and event normalization into focused modules.
+- Made CI derive minimum provider SDK install versions from `peerDependencies`, with a check that development and peer ranges match.
+
 ## 1.1.0 - 2026-09-29
 
 - Removed the non-English README section for a consistent English-language package experience.
