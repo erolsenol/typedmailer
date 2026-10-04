@@ -1,6 +1,6 @@
 import type { Mailer, SendMailInput, SendMailResult } from './types.js';
 import { MailError } from './errors.js';
-import { mailInputSchema } from './config.js';
+import { mailInputSchema, senderSchema } from './config.js';
 
 export interface CapturedMail extends SendMailInput {
   readonly from: NonNullable<SendMailInput['from']>;
@@ -13,6 +13,7 @@ export interface TestMailer extends Mailer<'test'> {
 
 /** In-memory mailer for application tests and local flows. It never sends network requests. */
 export function createTestMailer(options: { from: NonNullable<SendMailInput['from']> }): TestMailer {
+  const from = senderSchema.parse(options.from);
   const sent: CapturedMail[] = [];
   let closed = false;
   const assertOpen = (): void => {
@@ -25,7 +26,7 @@ export function createTestMailer(options: { from: NonNullable<SendMailInput['fro
     },
     async send(input): Promise<SendMailResult<'test'>> {
       assertOpen();
-      const message = { ...input, from: input.from ?? options.from };
+      const message = { ...input, from: input.from ?? from };
       mailInputSchema.parse(message);
       sent.push(message);
       return { provider: 'test', messageId: `test-${sent.length}`, acceptedAt: new Date() };

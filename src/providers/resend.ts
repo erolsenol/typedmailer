@@ -35,7 +35,7 @@ export function createResendProvider(options: { apiKey: string }): MailProvider 
           ? {
               attachments: input.attachments.map((attachment) => ({
                 filename: attachment.filename,
-                content: typeof attachment.content === 'string' ? attachment.content : Buffer.from(attachment.content),
+                content: Buffer.from(attachment.content).toString('base64'),
                 ...(attachment.contentType ? { contentType: attachment.contentType } : {}),
                 ...(attachment.contentId ? { contentId: attachment.contentId } : {}),
               })),

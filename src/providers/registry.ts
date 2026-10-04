@@ -1,16 +1,15 @@
 import { z } from 'zod';
 import { MailError } from '../errors.js';
 import type { MailProvider } from '../types.js';
+import { senderSchema } from '../config.js';
 
-export const mailerBaseOptionsSchema = z.object({
-  from: z.union([
-    z.string().email(),
-    z.string().regex(/^.+ <[^<>\s]+@[^<>\s]+>$/, 'Use a valid email address or "Name <email@example.com>".'),
-    z.object({ email: z.string().email(), name: z.string().optional() }).strict(),
-  ]),
-  /** Optional aggregate in-memory attachment cap. No default preserves existing behavior. */
-  maxAttachmentBytes: z.number().int().positive().optional(),
-});
+export const mailerBaseOptionsSchema = z
+  .object({
+    from: senderSchema,
+    /** Optional aggregate in-memory attachment cap. No default preserves existing behavior. */
+    maxAttachmentBytes: z.number().int().positive().optional(),
+  })
+  .strict();
 
 export const providerOptions = {
   resend: mailerBaseOptionsSchema.extend({ provider: z.literal('resend'), apiKey: z.string().min(1) }),

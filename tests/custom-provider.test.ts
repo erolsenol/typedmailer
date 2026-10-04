@@ -3,6 +3,19 @@ import { createMailer, MailError } from '../src/index.js';
 import type { ProviderAdapter } from '../src/index.js';
 
 describe('custom provider adapters', () => {
+  it.each(['', '  '])('rejects an accepted custom response with a blank ID: %j', async (messageId) => {
+    const mailer = createMailer({
+      provider: { name: 'custom', send: async () => ({ messageId }) },
+      from: 'sender@example.test',
+    });
+    await expect(mailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' })).rejects.toMatchObject({
+      code: 'provider',
+      deliveryUnknown: true,
+      retryable: false,
+      provider: 'custom',
+    });
+    await mailer.close();
+  });
   it('sends normalized mail through the public adapter API', async () => {
     const send = vi.fn(async () => ({ messageId: 'custom-message-1' }));
     const adapter: ProviderAdapter<'acme-mail'> = { name: 'acme-mail', send };

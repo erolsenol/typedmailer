@@ -39,6 +39,8 @@ npm install typedmailer mailgun.js form-data
 npm install typedmailer @aws-sdk/client-sesv2
 ```
 
+Upgrading from v1? Read the [v2 migration guide](docs/migration-v2.md), including the SES SDK minimum and attachment encoding changes.
+
 Requires Node.js 22 or newer. Provider SDKs are optional peers and are loaded only when their adapter is selected.
 
 For SMTP, use `secure: true` with implicit TLS (commonly port 465), or use STARTTLS with `secure: false` and `requireTLS: true`. Port 587 requires STARTTLS by default; other ports use opportunistic TLS unless `requireTLS` is set.
@@ -134,7 +136,7 @@ const mailer = createMailer({
 
 ### Amazon SES
 
-SES requires a region and uses the AWS SDK credential provider chain, such as environment credentials, a shared profile, or an IAM role.
+SES requires `@aws-sdk/client-sesv2 >=3.797.0 <4`, a region, and uses the AWS SDK credential provider chain, such as environment credentials, a shared profile, or an IAM role.
 
 ```ts
 const mailer = createMailer({
@@ -162,9 +164,11 @@ For local development, start Mailpit with `docker run --rm -p 1025:1025 -p 8025:
 
 ## Message options
 
-`to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend, Postmark, SendGrid, Mailgun, Amazon SES, and SMTP. Attachment content accepts strings or `Uint8Array`; the provider adapters buffer it for SDK requests, so use an application-managed upload or streaming workflow for large files. Set `maxAttachmentBytes` on `createMailer()` to reject a message before loading or calling the provider when the combined UTF-8 and binary attachment content exceeds your application's memory budget. It is unset by default for backward compatibility.
+`to` accepts an email string, a `{ email, name }` object, or an array. Provide `text` or `html` (or both). Optional fields include `from`, `replyTo`, `cc`, `bcc`, `headers`, `attachments`, `metadata`, and `idempotencyKey`; `messageId` is SMTP-only. Attachments may include `contentId` for inline images with Resend, Postmark, SendGrid, Mailgun, Amazon SES, and SMTP. Attachment content accepts UTF-8 text strings or raw bytes as `Uint8Array`; the provider adapters buffer it for SDK requests, so use an application-managed upload or streaming workflow for large files. Set `maxAttachmentBytes` on `createMailer()` to reject a message before loading or calling the provider when the combined UTF-8 and binary attachment content exceeds your application's memory budget. It is unset by default for backward compatibility.
 
 Subjects and attachment filenames cannot be blank. Supplied content types and inline content IDs must be non-empty. The library does not impose a fixed attachment-size limit.
+
+Built-in and custom mailer configuration reject unknown option keys. Named sender strings validate the enclosed email address; display names cannot contain line breaks. Message/configuration validation failures are Zod errors. Built-in provider names are preserved in result types: a Resend mailer returns `SendMailResult<'resend'>`.
 
 Provider capabilities differ. Unsupported fields return a `MailError` with code `unsupported` instead of being silently ignored.
 
@@ -202,7 +206,7 @@ const result = await mailer.send({ to: 'person@example.com', subject: 'Hello', t
 await mailer.close();
 ```
 
-The custom adapter owns provider SDK setup, field support, and error handling. Throwing an error still passes through TypedMailer error normalization. Connection verification is reported as `unsupported` when the adapter does not implement it.
+The custom adapter owns provider SDK setup, field support, and error handling. Throwing an error still passes through TypedMailer error normalization. Connection verification is reported as `unsupported` when the adapter does not implement it. Blank or invalid custom message IDs reject with code `provider` and `deliveryUnknown: true`.
 
 ```ts
 await mailer.send({
@@ -232,7 +236,7 @@ Messages captured by `createTestMailer` return `provider: 'test'` so test result
 
 ## Verify provider webhooks
 
-Use `verifyWebhook` from `typedmailer/webhooks` to authenticate a raw request and receive normalized events. Your HTTP route remains responsible for preserving the raw body, responding to the provider, deduplicating events durably, and applying application changes. See [Webhook verification](docs/webhooks.md) for provider-specific configuration and security requirements.
+Use `verifyWebhook` from `typedmailer/webhooks` to authenticate a raw request and receive normalized events. Your HTTP route remains responsible for preserving the raw body, responding to the provider, deduplicating events durably, and applying application changes. See [Webhook verification](docs/webhooks.md) for provider-specific configuration and security requirements, and the tested [Next.js and Express route examples](docs/framework-webhooks.md) for raw-body capture and durable event acceptance.
 
 ## Runnable examples
 

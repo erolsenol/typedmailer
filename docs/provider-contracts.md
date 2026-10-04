@@ -6,7 +6,7 @@ The adapters provide one `createMailer(...).send(...)` interface, while provider
 
 - Provider SDKs are optional peers. Only the selected adapter is loaded, and a missing selected SDK becomes a `MailError` with code `configuration`.
 - `send()` resolves when the provider reports that it accepted the request. It does not prove inbox delivery.
-- A successful result includes the selected provider, provider message ID, and local acceptance timestamp. If the provider gives no ID, `messageId` is an empty string.
+- A successful result includes the selected provider, a non-blank provider message ID, and local acceptance timestamp. If a built-in or custom provider gives no usable ID, `send()` rejects with a `MailError` with code `provider` and `deliveryUnknown: true`.
 - TypedMailer does not retry automatically. `retryable` and `deliveryUnknown` are diagnostic signals, not a safe retry instruction. A timeout or ambiguous provider response can mean the provider accepted the message.
 - Unsupported fields or operations fail with `MailError` code `unsupported`; adapters must not silently discard caller data.
 - `close()` is safe to call repeatedly, stops new work, waits for in-flight operations, and closes the underlying transport at most once.
@@ -23,7 +23,13 @@ The adapters provide one `createMailer(...).send(...)` interface, while provider
 | Amazon SES | No                | No              | Yes      | Yes                | Unsupported             |
 | SMTP       | Yes               | No              | No       | Yes                | SMTP connection check   |
 
-Attachments are buffered for provider SDK requests. Configure `maxAttachmentBytes` on `createMailer()` to enforce an aggregate byte cap over all attachment content; strings are counted as UTF-8 bytes and `Uint8Array` content by `byteLength`. The option has no default cap to preserve existing behavior. Large-file streaming belongs in the application. `contentId` is supported by the providers listed as supporting inline attachments. `verifyConnection()` is only available for SMTP because the API providers do not offer a side-effect-free check through this interface.
+Attachments are buffered for provider SDK requests. Configure `maxAttachmentBytes` on `createMailer()` to enforce an aggregate byte cap over all attachment content; strings represent UTF-8 file content and are counted as UTF-8 bytes and `Uint8Array` content by `byteLength`. The option has no default cap to preserve existing behavior. Large-file streaming belongs in the application. `contentId` is supported by the providers listed as supporting inline attachments. `verifyConnection()` is only available for SMTP because the API providers do not offer a side-effect-free check through this interface.
+
+## SDK serialization compatibility
+
+Amazon SES requires `@aws-sdk/client-sesv2 >=3.797.0 <4` to serialize both custom headers and attachments. Resend receives Base64 attachment strings derived from the original UTF-8 text or binary bytes. `tests/providers/sdk-serialization.test.ts` runs the actual Resend SDK with an intercepted fetch and the actual SES SDK with a local transport; it verifies the serialized HTTP payload rather than only mocked SDK arguments. These tests run against both the lockfile and minimum supported SDK versions in CI.
+
+Built-in mailers preserve the selected provider literal (or provider union) in their result type. Built-in and custom configurations reject unknown keys and share sender validation.
 
 ## Updating a provider adapter
 
