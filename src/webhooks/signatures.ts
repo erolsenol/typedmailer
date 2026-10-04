@@ -3,7 +3,7 @@ import { WebhookVerificationError } from './types.js';
 import type { VerifyWebhookInput } from './types.js';
 import { asRecord, asString, assertRecentTimestamp, decodeBase64, decodeHex, getHeader, safeEqual } from './shared.js';
 
-export function verifyResend(input: Extract<VerifyWebhookInput, { provider: 'resend' }>, rawBody: Uint8Array): void {
+export function verifyResend(input: Extract<VerifyWebhookInput, { provider: 'resend' }>, rawBody: Uint8Array): string {
   const messageId = getHeader(input.headers, 'svix-id');
   const timestamp = getHeader(input.headers, 'svix-timestamp');
   const signatures = getHeader(input.headers, 'svix-signature');
@@ -23,6 +23,7 @@ export function verifyResend(input: Extract<VerifyWebhookInput, { provider: 'res
     .split(' ')
     .some((item) => item.startsWith('v1,') && safeEqual(expected, decodeBase64(item.slice(3))));
   if (!matches) throw new WebhookVerificationError('invalid_signature');
+  return messageId;
 }
 
 export function verifyMailgun(input: Extract<VerifyWebhookInput, { provider: 'mailgun' }>, payload: unknown): void {
@@ -76,13 +77,14 @@ export function verifyAuthorization(
 export async function verifySnsNotification(
   input: Extract<VerifyWebhookInput, { provider: 'ses' }>,
   payload: unknown,
-): Promise<unknown> {
+): Promise<{ readonly payload: unknown; readonly deliveryId: string }> {
   const envelope = asRecord(payload);
   const topicArn = asString(envelope.TopicArn);
   const signingCertUrl = asString(envelope.SigningCertURL);
   const signature = asString(envelope.Signature);
   const signatureVersion = asString(envelope.SignatureVersion);
   if (
+    !asString(envelope.MessageId) ||
     envelope.Type !== 'Notification' ||
     topicArn !== input.topicArn ||
     !signingCertUrl ||
@@ -126,11 +128,28 @@ export async function verifySnsNotification(
   if (!response.ok) throw new WebhookVerificationError('invalid_signature');
   let certificateBody: string;
   try {
-    certificateBody = await response.text();
+    if (!response.body) throw new WebhookVerificationError('invalid_signature');
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        length += value.byteLength;
+        if (length > 32_768) {
+          await reader.cancel();
+          throw new WebhookVerificationError('invalid_signature');
+        }
+        chunks.push(value);
+      }
+      certificateBody = Buffer.concat(chunks, length).toString('utf8');
+    } finally {
+      reader.releaseLock();
+    }
   } catch {
     throw new WebhookVerificationError('invalid_signature');
   }
-  if (certificateBody.length > 32_768) throw new WebhookVerificationError('invalid_signature');
 
   try {
     const certificate = new X509Certificate(certificateBody);
@@ -156,7 +175,7 @@ export async function verifySnsNotification(
 
   try {
     const message = JSON.parse(asString(envelope.Message) ?? '');
-    return message;
+    return { payload: message, deliveryId: asString(envelope.MessageId)! };
   } catch {
     throw new WebhookVerificationError('invalid_payload');
   }

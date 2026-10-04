@@ -37,7 +37,7 @@ describe('SendGrid adapter', () => {
       replyTo: { email: 'reply@example.com', name: 'Reply' },
       headers: { 'X-Trace': 'trace-1' },
       customArgs: { tenant: 'tenant-1' },
-      attachments: [{ filename: 'hello.txt', content: 'SGk=', contentId: 'hello', disposition: 'inline' }],
+      attachments: [{ filename: 'hello.txt', content: 'SGk=', content_id: 'hello', disposition: 'inline' }],
     });
     expect(result).toMatchObject({ provider: 'sendgrid', messageId: 'sendgrid-message-1' });
     expect(result.acceptedAt).toBeInstanceOf(Date);

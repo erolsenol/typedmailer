@@ -1,6 +1,6 @@
 {
   "name": "typedmailer",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A type-safe Node.js email library with one API for Resend, Brevo, Postmark, SendGrid, Mailgun, Amazon SES, or SMTP.",
   "author": "Erol Senol",
   "license": "MIT",
@@ -38,7 +38,9 @@
     "docs/webhooks.md",
     "CODE_OF_CONDUCT.md",
     "docs/migration-v2.md",
-    "docs/framework-webhooks.md"
+    "docs/framework-webhooks.md",
+    "docs/reliability.md",
+    "examples/reliability"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -106,6 +108,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-sesv2": ">=3.797.0 <4",
+    "@electric-sql/pglite": "^0.5.8",
     "@getbrevo/brevo": ">=6.0.1 <7",
     "@sendgrid/mail": ">=8.0.0 <9",
     "@types/express": "^5.0.6",
@@ -117,6 +120,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "mailgun.js": ">=14.0.0 <15",
+    "nock": "^14.0.17",
     "nodemailer": ">=7.0.0 <11",
     "postmark": ">=5.0.0 <6",
     "prettier": "^3.9.9",
