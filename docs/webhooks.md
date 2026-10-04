@@ -2,6 +2,8 @@
 
 TypedMailer exposes `verifyWebhook()` from `typedmailer/webhooks`. It authenticates a raw HTTP webhook request before returning normalized event records. It does not start an HTTP server, acknowledge requests, persist event IDs, or perform application actions. Your route owns HTTP responses, durable deduplication, and business logic.
 
+For framework integration, use the tested [Next.js App Router and Express route examples](framework-webhooks.md).
+
 ## Raw request bodies
 
 Pass the exact bytes received by your HTTP framework. Parsing JSON and serializing it again changes the signed input and causes verification to fail. `rawBody` accepts a string or `Uint8Array`; `headers` is a case-insensitive record of request header names and values. If the framework parses request bodies automatically, configure a raw-body capture before its JSON parser. Apply an HTTP request-body size limit before buffering the body. `verifyWebhook()` also rejects bodies larger than 1 MiB by default; set `maxBodyBytes` to a suitable positive value for your provider and expected batch size. Normalized event batches are limited to 1,000 events by default; set `maxEvents` to adjust that limit. Keep both limits finite and consistent with the upstream request limit.

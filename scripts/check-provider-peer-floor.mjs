@@ -22,6 +22,10 @@ for (const [name, range] of Object.entries(peerDependencies)) {
 if (installArgs.length === 0) throw new Error('No optional provider peer dependencies were found.');
 
 console.log(`Installing provider peer minimums: ${installArgs.join(', ')}`);
-execFileSync('npm', ['install', '--no-save', '--ignore-scripts', '--no-audit', '--no-fund', ...installArgs], {
-  stdio: 'inherit',
-});
+execFileSync(
+  'npm',
+  ['install', '--no-save', '--package-lock=false', '--ignore-scripts', '--no-audit', '--no-fund', ...installArgs],
+  {
+    stdio: 'inherit',
+  },
+);

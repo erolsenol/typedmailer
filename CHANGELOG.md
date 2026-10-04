@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 2.0.0 - 2026-10-04
+
+- **Breaking:** Reject unknown built-in provider configuration fields and validate named sender email addresses consistently across production and test mailers.
+- **Breaking:** Require `@aws-sdk/client-sesv2 >=3.797.0 <4` so custom headers and attachments survive SDK serialization.
+- Encode Resend text and binary attachment content as Base64 before calling its SDK.
+- Preserve literal built-in provider names and provider unions in mailer result types.
+- Reject blank custom provider message IDs with `deliveryUnknown: true` and correct the documented acceptance contract.
+- Add real SDK HTTP serialization regression tests for Resend and SES, including minimum supported SDKs.
+- Add tested Next.js App Router and Express webhook examples with raw-body limits and durable acceptance callbacks.
+- Add a v2 migration guide describing configuration, attachment encoding, SDK, and type changes.
+
 ## 1.4.0 - 2026-09-29
 
 - Preserve `deliveryUnknown` when provider adapters normalize send responses that omit a message ID.

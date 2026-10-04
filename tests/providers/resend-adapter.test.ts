@@ -35,7 +35,7 @@ describe('Resend adapter', () => {
         html: '<p>Hello</p>',
         headers: { 'X-Trace': 'trace-1' },
         tags: [{ name: 'tenant', value: 'tenant-1' }],
-        attachments: [{ filename: 'hello.txt', content: Buffer.from([72, 105]), contentId: 'hello' }],
+        attachments: [{ filename: 'hello.txt', content: 'SGk=', contentId: 'hello' }],
       },
       { idempotencyKey: 'send-1' },
     );
@@ -69,9 +69,9 @@ describe('Resend adapter', () => {
     });
 
     const sent = mocks.resendSend.mock.calls[0]?.[0] as {
-      attachments: Array<{ content: Buffer; contentType?: string; contentId?: string }>;
+      attachments: Array<{ content: string; contentType?: string; contentId?: string }>;
     };
-    expect(sent.attachments[0]?.content.equals(Buffer.from(largeContent))).toBe(true);
+    expect(Buffer.from(sent.attachments[0]!.content, 'base64').equals(Buffer.from(largeContent))).toBe(true);
     expect(sent.attachments[0]?.contentType).toBe('application/octet-stream');
     expect(sent.attachments[1]).toMatchObject({ contentType: 'image/png', contentId: 'logo' });
   });
