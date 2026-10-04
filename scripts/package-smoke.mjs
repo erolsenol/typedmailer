@@ -48,6 +48,12 @@ try {
     assert.ok(packedFiles.has('docs/webhooks.md'), 'webhook guide is missing from the package');
     assert.ok(packedFiles.has('docs/migration-v2.md'), 'v2 migration guide is missing from the package');
     assert.ok(packedFiles.has('docs/framework-webhooks.md'), 'framework webhook guide is missing from the package');
+    assert.ok(packedFiles.has('docs/reliability.md'), 'reliability guide is missing from the package');
+    assert.ok(packedFiles.has('examples/reliability/schema.sql'), 'durable SQL example is missing from the package');
+    assert.ok(
+      packedFiles.has('examples/reliability/durable-mail.ts'),
+      'durable mail example is missing from the package',
+    );
     assert.ok(![...packedFiles].some((file) => file.startsWith('tests/') || file.startsWith('src/')));
     installTarget = resolve(tempRoot, pack.filename);
   }
@@ -79,16 +85,29 @@ try {
     assert.equal(typeof webhooks.verifyWebhook, 'function');
     assert.equal(typeof webhooks.WebhookVerificationError, 'function');
 
+    const observations = [];
     const customMailer = api.createMailer({
-      provider: { name: 'smoke-provider', send: async () => ({ messageId: 'custom-1' }) },
+      onSend: (event) => observations.push(event),
+      provider: { name: 'smoke-provider', send: async () => ({ messageId: 'custom-1', accepted: ['reader@example.test'], rejected: [] }) },
       from: 'sender@example.test',
     });
-    assert.equal((await customMailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' })).provider, 'smoke-provider');
+    const customReceipt = await customMailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' });
+    assert.equal(customReceipt.provider, 'smoke-provider');
+    assert.deepEqual(customReceipt.accepted, ['reader@example.test']);
+    assert.deepEqual(observations.map((event) => event.type), ['started', 'succeeded']);
     await customMailer.close();
 
     const testMailer = testing.createTestMailer({ from: 'sender@example.test' });
-    const result = await testMailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' });
+    const headers = { 'X-Test': 'original' };
+    const result = await testMailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi', headers });
+    headers['X-Test'] = 'changed';
+    assert.equal(testMailer.sent[0].headers['X-Test'], 'original');
     assert.equal(result.messageId, 'test-1');
+    testMailer.clear();
+    assert.equal((await testMailer.send({ to: 'reader@example.test', subject: 'Hello', text: 'Hi' })).messageId, 'test-2');
+    const events = await webhooks.verifyWebhook({ provider: 'postmark', authorization: 'local', headers: { authorization: 'local' }, rawBody: JSON.stringify({ RecordType: 'Delivery', MessageID: 'mail' }) });
+    assert.equal(events[0].id, 'mail');
+    assert.equal(events[0].eventId, undefined);
 
     const missingPeers = [
       [{ provider: 'resend', apiKey: 'placeholder', from: 'sender@example.test' }, 'resend'],
@@ -132,12 +151,16 @@ try {
      void builtInResult;
      const message: SendMailInput = { to: 'reader@example.test', subject: 'Hello', text: 'Hi' };
      const provider: ProviderName = 'ses';
+     const observerOptions: MailerOptions = { provider: 'resend', apiKey: 'placeholder', from, onSend(event) { if (event.type !== 'started') console.log(event.durationMs); } };
+     void observerOptions;
+     const smtpReceipt: SendMailResult<'smtp'> = { provider: 'smtp', messageId: 'smtp', acceptedAt: new Date(), accepted: ['one'], rejected: ['two'] };
+     void smtpReceipt;
      const testResult: SendMailResult = { provider: 'test', messageId: 'test-1', acceptedAt: new Date() };
      const errorCode: MailErrorCode = 'unsupported';
-     const errorOptions: MailErrorOptions = { cause: new Error('original'), deliveryUnknown: true };
+     const errorOptions: MailErrorOptions = { cause: new Error('original'), deliveryUnknown: true, status: 503, retryAfterSeconds: 2 };
      new MailError('uncertain send', errorCode, provider, true, errorOptions);
      const webhookInput: VerifyWebhookInput = { provider: 'resend', rawBody: '{}', headers: {}, webhookSecret: 'whsec_placeholder' };
-     const webhookEvent: EmailWebhookEvent = { provider: 'resend', id: 'event-1', type: 'delivered', eventType: 'email.delivered', raw: {} };
+     const webhookEvent: EmailWebhookEvent = { provider: 'resend', id: 'event-1', eventId: 'event-1', deliveryId: 'notification-1', recipients: ['reader@example.test'], type: 'delivered', eventType: 'email.delivered', raw: {} };
      void [provider, testResult, webhookEvent];
      verifyWebhook(webhookInput);
      void customResult;

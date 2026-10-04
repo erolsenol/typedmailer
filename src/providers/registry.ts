@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { MailError } from '../errors.js';
-import type { MailProvider } from '../types.js';
+import type { MailProvider, MailSendObserver } from '../types.js';
 import { senderSchema } from '../config.js';
 
 export const mailerBaseOptionsSchema = z
@@ -8,6 +8,9 @@ export const mailerBaseOptionsSchema = z
     from: senderSchema,
     /** Optional aggregate in-memory attachment cap. No default preserves existing behavior. */
     maxAttachmentBytes: z.number().int().positive().optional(),
+    onSend: z
+      .custom<MailSendObserver>((value) => typeof value === 'function', 'Expected an observer function.')
+      .optional(),
   })
   .strict();
 

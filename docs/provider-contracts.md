@@ -7,6 +7,8 @@ The adapters provide one `createMailer(...).send(...)` interface, while provider
 - Provider SDKs are optional peers. Only the selected adapter is loaded, and a missing selected SDK becomes a `MailError` with code `configuration`.
 - `send()` resolves when the provider reports that it accepted the request. It does not prove inbox delivery.
 - A successful result includes the selected provider, a non-blank provider message ID, and local acceptance timestamp. If a built-in or custom provider gives no usable ID, `send()` rejects with a `MailError` with code `provider` and `deliveryUnknown: true`.
+- SMTP results include optional `accepted`/`rejected` envelope recipients. Partial acceptance resolves, while complete rejection rejects; acceptance does not prove inbox delivery.
+- Optional `onSend` observers expose sanitized lifecycle metrics, with synchronous and asynchronous failures isolated. See [reliability](reliability.md).
 - TypedMailer does not retry automatically. `retryable` and `deliveryUnknown` are diagnostic signals, not a safe retry instruction. A timeout or ambiguous provider response can mean the provider accepted the message.
 - Unsupported fields or operations fail with `MailError` code `unsupported`; adapters must not silently discard caller data.
 - `close()` is safe to call repeatedly, stops new work, waits for in-flight operations, and closes the underlying transport at most once.
@@ -37,4 +39,4 @@ When changing an adapter, add its configuration schema and lazy loader in `src/p
 
 ## Custom adapters
 
-Applications can provide a `ProviderAdapter<TName>` directly to `createMailer()` without adding a built-in provider. Its `send()` method receives `NormalizedMailInput`: `from` is always set, and `to`, `cc`, and `bcc` are arrays when present. Resolve with `{ messageId }` after the SDK accepts the message. `verifyConnection()` and `close()` are optional; verification rejects with `unsupported` when omitted, while close is a no-op. TypedMailer normalizes thrown errors and tags results with the adapter's name. The generic adapter name is preserved in `SendMailResult<TName>` for TypeScript callers. Custom adapters are responsible for documenting and enforcing unsupported message fields.
+Applications can provide a `ProviderAdapter<TName>` directly to `createMailer()` without adding a built-in provider. Its `send()` method receives `NormalizedMailInput`: `from` is always set, and `to`, `cc`, and `bcc` are arrays when present. Resolve with `{ messageId }` and optional `accepted`/`rejected` recipient lists after the SDK accepts the message. `verifyConnection()` and `close()` are optional; verification rejects with `unsupported` when omitted, while close is a no-op. TypedMailer normalizes thrown errors and tags results with the adapter's name. The generic adapter name is preserved in `SendMailResult<TName>` for TypeScript callers. Custom adapters are responsible for documenting and enforcing unsupported message fields.

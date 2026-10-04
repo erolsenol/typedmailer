@@ -102,6 +102,8 @@ describe('verifyWebhook', () => {
     expect(events[0]).toMatchObject({
       provider: 'resend',
       id: 'evt_123',
+      eventId: 'evt_123',
+      deliveryId: 'msg_123',
       type: 'delivered',
       eventType: 'email.delivered',
       messageId: 'email_123',
@@ -324,6 +326,7 @@ describe('verifyWebhook', () => {
           provider: 'ses',
           type: 'delivered',
           messageId: 'ses-message-1',
+          deliveryId: 'sns-message-1',
           recipient: 'reader@example.test',
         });
 
@@ -345,6 +348,38 @@ describe('verifyWebhook', () => {
       }
     } finally {
       rmSync(fixtureDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('cancels oversized SNS certificate streams before buffering the complete body', async () => {
+    const cancel = vi.fn();
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(new Uint8Array(20_000));
+      },
+      cancel,
+    });
+    vi.stubGlobal('fetch', async () => new Response(body));
+    try {
+      await expect(
+        verifyWebhook({
+          provider: 'ses',
+          topicArn: 'arn:aws:sns:us-east-1:123456789012:mail-events',
+          headers: {},
+          rawBody: JSON.stringify({
+            Type: 'Notification',
+            MessageId: 'notification',
+            TopicArn: 'arn:aws:sns:us-east-1:123456789012:mail-events',
+            SignatureVersion: '2',
+            Signature: 'fixture',
+            SigningCertURL: 'https://sns.us-east-1.amazonaws.com/SimpleNotificationService-test.pem',
+            Message: '{}',
+          }),
+        }),
+      ).rejects.toMatchObject({ code: 'invalid_signature' });
+      expect(cancel).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 

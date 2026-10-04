@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 2.1.0 - 2026-10-04
+
+- Preserve authenticated Resend/SNS webhook `deliveryId`, genuine provider `eventId`, and all Resend `recipients` without changing event cardinality or legacy identifiers.
+- Correct SES complaint/delay timestamps and enforce recipient limits after fallback; stream SNS certificates with a finite byte limit.
+- Deep-copy test mailer captures and keep message IDs unique after clearing captures.
+- Expose SMTP accepted/rejected envelope recipients and provider response `status`/`retryAfterSeconds` diagnostics.
+- Add optional privacy-safe send observers whose failures do not change delivery results.
+- Correct SendGrid inline attachment serialization to use the HTTP `content_id` field.
+- Add real SDK serialization and error decoding coverage for every provider, real SMTP partial-rejection tests, and minimum SDK compatibility checks.
+- Add PostgreSQL durable webhook inbox/outbox examples with binary attachment storage, tested state transitions, and conservative uncertain-delivery recovery.
+- Pin published consumer checks to an exact version and source commit after successful publication, with bounded registry propagation polling.
+
 ## 2.0.0 - 2026-10-04
 
 - **Breaking:** Reject unknown built-in provider configuration fields and validate named sender email addresses consistently across production and test mailers.

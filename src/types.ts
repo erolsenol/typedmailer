@@ -30,6 +30,9 @@ export interface SendMailResult<TProvider extends string = ProviderName | 'test'
   readonly messageId: string;
   /** Time when the provider accepted the request. This does not confirm inbox delivery. */
   readonly acceptedAt: Date;
+  /** SMTP envelope recipients accepted/rejected by the relay; not proof of inbox delivery. */
+  readonly accepted?: readonly string[];
+  readonly rejected?: readonly string[];
 }
 
 export interface Mailer<TProvider extends string = ProviderName | 'test'> {
@@ -50,6 +53,7 @@ export interface CustomMailerOptions<TProvider extends string = string> {
   readonly provider: ProviderAdapter<TProvider>;
   readonly from: MailAddress;
   readonly maxAttachmentBytes?: number;
+  readonly onSend?: MailSendObserver;
 }
 
 export interface NormalizedMailInput extends Omit<SendMailInput, 'from' | 'to' | 'cc' | 'bcc' | 'replyTo'> {
@@ -62,6 +66,8 @@ export interface NormalizedMailInput extends Omit<SendMailInput, 'from' | 'to' |
 
 export interface ProviderSendResult {
   readonly messageId: string;
+  readonly accepted?: readonly string[];
+  readonly rejected?: readonly string[];
 }
 
 export interface MailProvider {
@@ -69,3 +75,19 @@ export interface MailProvider {
   verifyConnection(): Promise<void>;
   close(): Promise<void>;
 }
+
+/** Contains no addresses, message content, credentials, or arbitrary provider errors. */
+export type MailSendEvent =
+  | { readonly type: 'started'; readonly provider: string }
+  | { readonly type: 'succeeded'; readonly provider: string; readonly durationMs: number }
+  | {
+      readonly type: 'failed';
+      readonly provider: string;
+      readonly durationMs: number;
+      readonly code: import('./errors.js').MailErrorCode;
+      readonly retryable: boolean;
+      readonly deliveryUnknown: boolean;
+    };
+
+/** Observer failures are isolated. Async observers do not delay sends or close(). */
+export type MailSendObserver = (event: MailSendEvent) => void | Promise<void>;

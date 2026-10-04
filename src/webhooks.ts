@@ -42,9 +42,10 @@ export async function verifyWebhook(input: VerifyWebhookInput): Promise<readonly
   }
 
   switch (input.provider) {
-    case 'resend':
-      verifyResend(input, rawBody);
-      return normalizeResend(payload);
+    case 'resend': {
+      const deliveryId = verifyResend(input, rawBody);
+      return normalizeResend(payload, maxEvents).map((event) => ({ ...event, deliveryId }));
+    }
     case 'mailgun':
       verifyMailgun(input, payload);
       return normalizeMailgun(payload);
@@ -55,7 +56,12 @@ export async function verifyWebhook(input: VerifyWebhookInput): Promise<readonly
     case 'postmark':
       verifyAuthorization(input, input.authorizationHeader ?? 'authorization');
       return normalizeProviderEvents(input.provider, payload, maxEvents);
-    case 'ses':
-      return normalizeSes(await verifySnsNotification(input, payload), maxEvents);
+    case 'ses': {
+      const notification = await verifySnsNotification(input, payload);
+      return normalizeSes(notification.payload, maxEvents).map((event) => ({
+        ...event,
+        deliveryId: notification.deliveryId,
+      }));
+    }
   }
 }

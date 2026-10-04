@@ -46,7 +46,7 @@ export function createSendGridProvider(options: { apiKey: string }): MailProvide
                   filename: attachment.filename,
                   content: Buffer.from(attachment.content).toString('base64'),
                   ...(attachment.contentType ? { type: attachment.contentType } : {}),
-                  ...(attachment.contentId ? { contentId: attachment.contentId, disposition: 'inline' } : {}),
+                  ...(attachment.contentId ? { content_id: attachment.contentId, disposition: 'inline' } : {}),
                 })),
               }
             : {}),

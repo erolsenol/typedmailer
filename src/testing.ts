@@ -16,6 +16,7 @@ export function createTestMailer(options: { from: NonNullable<SendMailInput['fro
   const from = senderSchema.parse(options.from);
   const sent: CapturedMail[] = [];
   let closed = false;
+  let sequence = 0;
   const assertOpen = (): void => {
     if (closed) throw new MailError('Mailer has been closed.', 'configuration', 'test', false);
   };
@@ -26,10 +27,10 @@ export function createTestMailer(options: { from: NonNullable<SendMailInput['fro
     },
     async send(input): Promise<SendMailResult<'test'>> {
       assertOpen();
-      const message = { ...input, from: input.from ?? from };
+      const message = structuredClone({ ...input, from: input.from ?? from });
       mailInputSchema.parse(message);
       sent.push(message);
-      return { provider: 'test', messageId: `test-${sent.length}`, acceptedAt: new Date() };
+      return { provider: 'test', messageId: `test-${++sequence}`, acceptedAt: new Date() };
     },
     async verifyConnection() {
       assertOpen();

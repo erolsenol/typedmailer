@@ -12,6 +12,7 @@ import type {
   CustomMailerOptions,
   Mailer,
   MailProvider,
+  MailSendEvent,
   NormalizedMailInput,
   ProviderAdapter,
   SendMailInput,
@@ -77,6 +78,14 @@ export function createMailer(input: MailerOptions): Mailer<string> {
     : mailerOptionsSchema.parse(input);
   const providerName =
     typeof parsedOptions.provider === 'string' ? parsedOptions.provider : parsedOptions.provider.name;
+  const notify = (event: MailSendEvent): void => {
+    try {
+      // Telemetry must never alter delivery or produce an unhandled rejection.
+      void Promise.resolve(parsedOptions.onSend?.(event)).catch(() => undefined);
+    } catch {
+      // A synchronous observer failure is isolated as well.
+    }
+  };
   const assertOpen = (): void => {
     if (closed) throw new MailError('Mailer has been closed.', 'configuration', providerName, false);
   };
@@ -149,6 +158,8 @@ export function createMailer(input: MailerOptions): Mailer<string> {
         ...(bcc ? { bcc } : {}),
         ...(parsed.replyTo ? { replyTo: parsed.replyTo } : {}),
       };
+      const startedAt = performance.now();
+      notify({ type: 'started', provider: providerName });
       try {
         const result = await runWithProvider((provider) => provider.send(normalized));
         if (typeof result?.messageId !== 'string' || result.messageId.trim().length === 0) {
@@ -156,13 +167,41 @@ export function createMailer(input: MailerOptions): Mailer<string> {
             deliveryUnknown: true,
           });
         }
-        return {
+        for (const recipients of [result.accepted, result.rejected]) {
+          if (
+            recipients !== undefined &&
+            (!Array.isArray(recipients) ||
+              recipients.some((recipient: unknown) => typeof recipient !== 'string' || !recipient.trim()))
+          ) {
+            throw new MailError(
+              'The provider returned an invalid recipient receipt.',
+              'provider',
+              providerName,
+              false,
+              { deliveryUnknown: true },
+            );
+          }
+        }
+        const receipt: SendMailResult<string> = {
+          ...(result.accepted ? { accepted: [...result.accepted] } : {}),
+          ...(result.rejected ? { rejected: [...result.rejected] } : {}),
           provider: providerName,
           messageId: result.messageId,
           acceptedAt: new Date(),
         };
+        notify({ type: 'succeeded', provider: providerName, durationMs: performance.now() - startedAt });
+        return receipt;
       } catch (error) {
-        throw normalizeProviderError(error, providerName, 'send');
+        const normalizedError = normalizeProviderError(error, providerName, 'send');
+        notify({
+          type: 'failed',
+          provider: providerName,
+          durationMs: performance.now() - startedAt,
+          code: normalizedError.code,
+          retryable: normalizedError.retryable,
+          deliveryUnknown: normalizedError.deliveryUnknown,
+        });
+        throw normalizedError;
       }
     },
     async verifyConnection(): Promise<void> {
@@ -195,6 +234,8 @@ export type {
   MailAddress,
   MailAttachment,
   Mailer,
+  MailSendEvent,
+  MailSendObserver,
   NormalizedMailInput,
   ProviderAdapter,
   ProviderName,

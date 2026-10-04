@@ -1,3 +1,4 @@
+import type SMTPTransport from 'nodemailer/lib/smtp-transport/index.js';
 import nodemailer from 'nodemailer';
 import { Buffer } from 'node:buffer';
 import { MailError, normalizeProviderError } from '../errors.js';
@@ -18,6 +19,10 @@ interface SmtpOptions {
 function toNodemailerAddress(address: MailAddress): string | { address: string; name?: string } {
   if (typeof address === 'string') return address;
   return { address: address.email, ...(address.name !== undefined ? { name: address.name } : {}) };
+}
+
+function envelopeEmail(address: string | { address: string }): string {
+  return typeof address === 'string' ? address : address.address;
 }
 
 export function createSmtpProvider(options: SmtpOptions): MailProvider {
@@ -64,13 +69,17 @@ export function createSmtpProvider(options: SmtpOptions): MailProvider {
                 })),
               }
             : {}),
-        }) as Promise<{ messageId?: string }>);
+        }) as Promise<SMTPTransport.SentMessageInfo>);
         if (!result.messageId) {
           throw new MailError('SMTP returned no message identifier.', 'provider', 'smtp', false, {
             deliveryUnknown: true,
           });
         }
-        return { messageId: result.messageId };
+        return {
+          messageId: result.messageId,
+          ...(Array.isArray(result.accepted) ? { accepted: result.accepted.map(envelopeEmail) } : {}),
+          ...(Array.isArray(result.rejected) ? { rejected: result.rejected.map(envelopeEmail) } : {}),
+        };
       } catch (error) {
         throw normalizeProviderError(error, 'smtp', 'send');
       }
