@@ -46,6 +46,8 @@ try {
     assert.ok(packedFiles.has('docs/integration-testing.md'), 'integration smoke guide is missing from the package');
     assert.ok(packedFiles.has('docs/quickstart.md'), 'quick start guide is missing from the package');
     assert.ok(packedFiles.has('docs/webhooks.md'), 'webhook guide is missing from the package');
+    assert.ok(packedFiles.has('docs/migration-v2.md'), 'v2 migration guide is missing from the package');
+    assert.ok(packedFiles.has('docs/framework-webhooks.md'), 'framework webhook guide is missing from the package');
     assert.ok(![...packedFiles].some((file) => file.startsWith('tests/') || file.startsWith('src/')));
     installTarget = resolve(tempRoot, pack.filename);
   }
@@ -126,6 +128,8 @@ try {
      const customAdapter: ProviderAdapter<'custom-consumer'> = { name: 'custom-consumer', send: async () => ({ messageId: 'custom-id' }) };
      const customMailer = createMailer({ provider: customAdapter, from });
      const customResult: Promise<SendMailResult<'custom-consumer'>> = customMailer.send({ to: from, subject: 'Custom', text: 'Hello' });
+     const builtInResult: Promise<SendMailResult<'resend'>> = createMailer({ provider: 'resend', apiKey: 'placeholder', from }).send({ to: from, subject: 'Literal type', text: 'Hello' });
+     void builtInResult;
      const message: SendMailInput = { to: 'reader@example.test', subject: 'Hello', text: 'Hi' };
      const provider: ProviderName = 'ses';
      const testResult: SendMailResult = { provider: 'test', messageId: 'test-1', acceptedAt: new Date() };

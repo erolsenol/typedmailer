@@ -1,14 +1,25 @@
 import { z } from 'zod';
 import type { MailAddress } from './types.js';
 
-const addressSchema = z.union([
-  z.string().email(),
-  z.object({ email: z.string().email(), name: z.string().optional() }).strict(),
-]);
-const senderSchema = z.union([
-  z.string().email(),
-  z.string().regex(/^.+ <[^<>\s]+@[^<>\s]+>$/, 'Use a valid email address or "Name <email@example.com>".'),
-  z.object({ email: z.string().email(), name: z.string().optional() }).strict(),
+const emailSchema = z.string().email();
+const addressObjectSchema = z
+  .object({
+    email: emailSchema,
+    name: z
+      .string()
+      .refine((value) => !/[\r\n]/.test(value), 'Display names cannot contain line breaks.')
+      .optional(),
+  })
+  .strict();
+const addressSchema = z.union([emailSchema, addressObjectSchema]);
+
+export const senderSchema = z.union([
+  emailSchema,
+  z.string().refine((value) => {
+    const match = /^([^<>\r\n]+) <([^<>\s]+)>$/.exec(value);
+    return match !== null && match[1]!.trim().length > 0 && emailSchema.safeParse(match[2]).success;
+  }, 'Use a valid email address or "Name <email@example.com>".'),
+  addressObjectSchema,
 ]);
 
 export const mailInputSchema = z

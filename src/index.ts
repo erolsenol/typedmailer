@@ -14,7 +14,6 @@ import type {
   MailProvider,
   NormalizedMailInput,
   ProviderAdapter,
-  ProviderName,
   SendMailInput,
   SendMailResult,
 } from './types.js';
@@ -63,7 +62,9 @@ function createCustomProvider(adapter: ProviderAdapter): MailProvider {
 }
 
 export function createMailer<const TProvider extends string>(input: CustomMailerOptions<TProvider>): Mailer<TProvider>;
-export function createMailer(input: BuiltInMailerOptions): Mailer<ProviderName | 'test'>;
+export function createMailer<const TOptions extends BuiltInMailerOptions>(
+  input: TOptions,
+): Mailer<TOptions['provider']>;
 export function createMailer(input: MailerOptions): Mailer<string>;
 export function createMailer(input: MailerOptions): Mailer<string> {
   let providerPromise: Promise<MailProvider> | undefined;
@@ -150,6 +151,11 @@ export function createMailer(input: MailerOptions): Mailer<string> {
       };
       try {
         const result = await runWithProvider((provider) => provider.send(normalized));
+        if (typeof result?.messageId !== 'string' || result.messageId.trim().length === 0) {
+          throw new MailError('The provider returned no message identifier.', 'provider', providerName, false, {
+            deliveryUnknown: true,
+          });
+        }
         return {
           provider: providerName,
           messageId: result.messageId,
