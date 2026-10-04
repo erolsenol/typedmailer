@@ -6,7 +6,7 @@ TypedMailer is published as a public npm package. Releases are published by GitH
 
 Configure the npm package's Trusted Publisher for GitHub Actions with user `erolsenol`, repository `typedmailer`, and workflow filename `publish.yml`. npm documents the setup in [Trusted publishers](https://docs.npmjs.com/trusted-publishers/).
 
-The publish workflow starts when a GitHub Release is published. It installs the current npm CLI, verifies the release tag against `package.json` and the changelog, runs package checks and the dependency audit, then publishes with npm OIDC provenance. After publication it verifies the provenance attestation for that exact version. The original `1.0.0` release predates Trusted Publishing and has no provenance attestation. See [npm provenance](https://docs.npmjs.com/generating-provenance-statements/).
+The publish workflow starts when a GitHub Release is published. It installs the current npm CLI, verifies the release tag against `package.json` and the changelog, runs package checks and the dependency audit, then publishes with npm OIDC provenance. After publication it verifies the provenance attestation for that exact version, then invokes clean Node.js 22/24 consumer checks pinned to that version and its source commit. Registry availability is polled with a finite limit. The original `1.0.0` release predates Trusted Publishing and has no provenance attestation. See [npm provenance](https://docs.npmjs.com/generating-provenance-statements/).
 
 The active npm identity is `erol.senol`, so TypedMailer uses the unscoped package name `typedmailer`. The `@erolsenol` organization scope is not available to this npm account.
 
@@ -21,6 +21,8 @@ Before each release:
 3. Run `npm ci`, `RELEASE_TAG=vX.Y.Z npm run release:check`, `npm run check`, `npm run security:audit`, and `npm pack --dry-run`. Confirm the Mailpit integration job passes in CI.
 4. Commit the release changes and push a `vX.Y.Z` tag that points to that exact commit.
 5. Publish a GitHub Release for the tag. The workflow repeats the preflight and package checks, publishes with npm OIDC, and verifies the published version's provenance attestation.
-6. Confirm the workflow completed and npm signature audit reports provenance for that exact version before announcing it. If the publish workflow exhausts its registry propagation retries, run the `Verify published npm provenance` workflow with the same version; it checks the existing package and does not publish again. A GitHub Release or successful `npm publish` step alone is not provenance evidence.
+6. Confirm the publish and exact-version consumer jobs completed and npm signature audit reports provenance for that exact version before announcing it. If the publish workflow exhausts its registry propagation retries, run the `Verify published npm provenance` workflow with the same version; it checks the existing package and does not publish again. A GitHub Release or successful `npm publish` step alone is not provenance evidence.
 
 Never put an npm write token in the repository or workflow secrets when trusted publishing is configured. npm package visibility is public; keep provider credentials and npm credentials out of package contents and Git history.
+
+The standalone Published npm consumer workflow accepts an optional exact `version`. Scheduled checks resolve `latest` once and install that exact discovered version in every matrix job. They do not prove a specific release unless the version is supplied.

@@ -15,11 +15,18 @@ export type EmailWebhookEventType =
 
 export interface EmailWebhookEvent {
   readonly provider: Exclude<ProviderName, 'smtp'>;
+  /** Legacy provider identifier; may fall back to the email message ID. */
   readonly id?: string;
+  /** Provider event ID, without a message-ID fallback. */
+  readonly eventId?: string;
+  /** Authenticated transport notification ID (Resend/SNS). Shared by events in one notification. */
+  readonly deliveryId?: string;
   readonly type: EmailWebhookEventType;
   readonly eventType: string;
   readonly messageId?: string;
   readonly recipient?: string;
+  /** All Resend recipients; recipient retains the first address for compatibility. */
+  readonly recipients?: readonly string[];
   readonly occurredAt?: Date;
   /** Original provider data. It can contain message metadata and personal information. */
   readonly raw: unknown;

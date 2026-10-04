@@ -232,7 +232,7 @@ await mailer.send({ to: 'person@example.test', subject: 'Hello', text: 'Hi' });
 console.log(mailer.sent[0]);
 ```
 
-Messages captured by `createTestMailer` return `provider: 'test'` so test results are not mistaken for SMTP deliveries.
+Captures are independent copies of addresses, headers, metadata, and attachment bytes. `clear()` removes captures without reusing message IDs. Messages captured by `createTestMailer` return `provider: 'test'` so test results are not mistaken for SMTP deliveries.
 
 ## Verify provider webhooks
 
@@ -251,7 +251,7 @@ For Amazon SES, run `npm install typedmailer @aws-sdk/client-sesv2 && node --env
 
 ## Errors and delivery
 
-Provider and transport failures are normalized as `MailError`, with `code`, `provider`, `retryable`, `deliveryUnknown`, and the original error in `cause`. Codes mean:
+Provider and transport failures are normalized as `MailError`, with `code`, `provider`, `retryable`, `deliveryUnknown`, optional response `status` and `retryAfterSeconds`, and the original error in `cause`. Codes mean:
 
 | Code             | Meaning                                                               |
 | ---------------- | --------------------------------------------------------------------- |
@@ -263,6 +263,8 @@ Provider and transport failures are normalized as `MailError`, with `code`, `pro
 | `unsupported`    | The selected adapter cannot represent a requested field or operation. |
 
 `retryable` is guidance from the normalized failure: recognized network failures and rate limits are retryable; API provider 5xx failures are retryable; authentication, configuration, unsupported, and SMTP 5xx failures are not. `deliveryUnknown` is separate: it is true when a send timeout/socket interruption, a provider 5xx, or an accepted response without a message ID means the provider may have accepted the message without returning a clear result. It stays false for verification failures, DNS lookup failures, authentication errors, rate limits, and SMTP response errors. This does not guarantee that retrying is safe. Use provider-supported idempotency where available and apply retry policy in your application. `cause` retains the original SDK error for diagnostics and can contain provider details; avoid logging it without reviewing your data handling policy.
+
+SMTP results also expose optional `accepted` and `rejected` envelope recipients. Partial rejection resolves with both lists; do not resend the whole recipient list. Use the [reliability guide](docs/reliability.md) for isolated `onSend` metrics hooks and tested durable inbox/outbox examples.
 
 A successful `send()` means the provider accepted the request; it does not confirm inbox delivery. Verify delivery, bounce, and complaint callbacks with [`typedmailer/webhooks`](docs/webhooks.md).
 

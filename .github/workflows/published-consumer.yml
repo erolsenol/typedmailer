@@ -2,6 +2,19 @@ name: Published npm consumer
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact version (for example 2.1.0); empty resolves latest once'
+        type: string
+        required: false
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+      commit:
+        type: string
+        required: true
   schedule:
     - cron: '41 8 * * 3'
 
@@ -11,15 +24,22 @@ permissions:
 jobs:
   availability:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       available: ${{ steps.check.outputs.available }}
+      version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit || github.sha }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - id: check
         run: node scripts/check-published-package.mjs
+        env:
+          PUBLISHED_VERSION: ${{ inputs.version }}
+          PUBLISHED_COMMIT: ${{ inputs.commit }}
 
   consumer:
     needs: availability
@@ -30,6 +50,8 @@ jobs:
         node: [22, 24]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit || github.sha }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node }}
@@ -38,4 +60,4 @@ jobs:
       - name: Install published package in a clean consumer
         run: node scripts/package-smoke.mjs
         env:
-          TYPEDMAILER_PACKAGE_SPEC: typedmailer@latest
+          TYPEDMAILER_PACKAGE_SPEC: typedmailer@${{ needs.availability.outputs.version }}

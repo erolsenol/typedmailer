@@ -11,9 +11,13 @@ import {
   parseDate,
 } from './shared.js';
 
-export function normalizeResend(payload: unknown): readonly EmailWebhookEvent[] {
+export function normalizeResend(payload: unknown, maxRecipients = 1_000): readonly EmailWebhookEvent[] {
   const root = asRecord(payload);
   const data = asRecord(root.data);
+  const singleRecipient = asString(data.to);
+  const recipients = singleRecipient ? [singleRecipient] : asStringArray(data.to);
+  if ((Array.isArray(data.to) && data.to.length > maxRecipients) || recipients.length > maxRecipients)
+    throw new WebhookVerificationError('invalid_payload');
   return [
     makeEvent('resend', root, {
       id: asString(root.id),
@@ -21,6 +25,7 @@ export function normalizeResend(payload: unknown): readonly EmailWebhookEvent[] 
       type: mapEventType(asString(root.type)),
       messageId: asString(data.email_id),
       recipient: firstString(data.to),
+      ...(recipients.length ? { recipients } : {}),
       occurredAt: parseDate(root.created_at),
     }),
   ];
@@ -82,6 +87,14 @@ export function normalizeSes(payload: unknown, maxEvents: number): readonly Emai
   }
   const to = recipients.map((recipient) => asString(asRecord(recipient).emailAddress)).filter(isString);
   const emails = to.length > 0 ? to : asStringArray(mail.destination);
+  if (emails.length > maxEvents) throw new WebhookVerificationError('invalid_payload');
+  const occurredAt =
+    parseDate(delivery?.timestamp) ??
+    parseDate(bounce?.timestamp) ??
+    parseDate(complaint?.timestamp) ??
+    parseDate(asOptionalRecord(message.deliveryDelay)?.timestamp) ??
+    parseDate(asOptionalRecord(message.reject)?.timestamp) ??
+    parseDate(mail.timestamp);
   return emails.length > 0
     ? emails.map((recipient) =>
         makeEvent('ses', message, {
@@ -90,7 +103,7 @@ export function normalizeSes(payload: unknown, maxEvents: number): readonly Emai
           type: mapEventType(eventName),
           messageId: asString(mail.messageId),
           recipient,
-          occurredAt: parseDate(delivery?.timestamp) ?? parseDate(bounce?.timestamp),
+          occurredAt,
         }),
       )
     : [
@@ -99,7 +112,7 @@ export function normalizeSes(payload: unknown, maxEvents: number): readonly Emai
           eventType: eventName,
           type: mapEventType(eventName),
           messageId: asString(mail.messageId),
-          occurredAt: parseDate(asRecord(message.delivery).timestamp),
+          occurredAt,
         }),
       ];
 }
@@ -119,6 +132,7 @@ export function normalizeProviderEvents(
         provider === 'brevo'
           ? (asId(event.id) ?? asString(event['message-id']))
           : (asId(event.ID) ?? asString(event.MessageID)),
+      eventId: provider === 'brevo' ? asId(event.id) : asId(event.ID),
       eventType: eventName,
       type: mapEventType(eventName),
       messageId: provider === 'brevo' ? asString(event['message-id']) : asString(event.MessageID),
@@ -135,6 +149,8 @@ function makeEvent(
   raw: unknown,
   fields: {
     readonly id?: string | undefined;
+    readonly eventId?: string | undefined;
+    readonly recipients?: readonly string[];
     readonly type: EmailWebhookEventType;
     readonly eventType: string | undefined;
     readonly messageId?: string | undefined;
@@ -143,12 +159,16 @@ function makeEvent(
   },
 ): EmailWebhookEvent {
   if (!fields.eventType) throw new WebhookVerificationError('invalid_payload');
+  const eventId =
+    fields.eventId ?? (provider !== 'brevo' && provider !== 'postmark' && provider !== 'ses' ? fields.id : undefined);
   return {
     provider,
     raw,
     eventType: fields.eventType,
     type: fields.type,
     ...(fields.id ? { id: fields.id } : {}),
+    ...(eventId ? { eventId } : {}),
+    ...(fields.recipients ? { recipients: fields.recipients } : {}),
     ...(fields.messageId ? { messageId: fields.messageId } : {}),
     ...(fields.recipient ? { recipient: fields.recipient } : {}),
     ...(fields.occurredAt ? { occurredAt: fields.occurredAt } : {}),

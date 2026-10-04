@@ -113,4 +113,60 @@ describe('real provider SDK serialization', () => {
       await mailer.close();
     }
   });
+  it.each([401, 429, 503])('decodes Resend HTTP status %i through its real SDK', async (status) => {
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(
+          JSON.stringify({
+            name: status === 429 ? 'rate_limit_exceeded' : 'application_error',
+            message: 'fixture',
+            statusCode: status,
+          }),
+          { status, headers: { 'content-type': 'application/json' } },
+        ),
+    );
+    const mailer = createMailer({ provider: 'resend', apiKey: 'local-test-key', from: 'sender@example.test' });
+    try {
+      await expect(mailer.send({ to: 'reader@example.test', subject: 'Hi', text: 'Body' })).rejects.toMatchObject({
+        status,
+        code: status === 401 ? 'authentication' : status === 429 ? 'rate_limit' : 'provider',
+        retryable: status !== 401,
+        deliveryUnknown: status === 503,
+      });
+    } finally {
+      await mailer.close();
+    }
+  });
+
+  it.each([401, 429, 503])('decodes SES HTTP status %i through its real SDK', async (status) => {
+    transport.handle.mockResolvedValueOnce({
+      response: {
+        statusCode: status,
+        headers: { 'content-type': 'application/json' },
+        body: Buffer.from(
+          JSON.stringify({
+            __type:
+              status === 429
+                ? 'TooManyRequestsException'
+                : status === 401
+                  ? 'UnrecognizedClientException'
+                  : 'ServiceUnavailableException',
+            message: 'fixture',
+          }),
+        ),
+      },
+    });
+    const mailer = createMailer({ provider: 'ses', region: 'eu-west-1', from: 'sender@example.test' });
+    try {
+      await expect(mailer.send({ to: 'reader@example.test', subject: 'Hi', text: 'Body' })).rejects.toMatchObject({
+        status,
+        code: status === 401 ? 'authentication' : status === 429 ? 'rate_limit' : 'provider',
+        retryable: status !== 401,
+        deliveryUnknown: status === 503,
+      });
+    } finally {
+      await mailer.close();
+    }
+  });
 });

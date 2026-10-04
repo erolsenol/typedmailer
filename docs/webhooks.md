@@ -44,13 +44,15 @@ for (const event of events) {
 
 ## Normalized event shape
 
-Each event includes `provider`, provider `eventType`, a normalized `type`, and the original provider payload in `raw`. When available, it also includes a provider event ID (`id`), message ID, recipient, and event timestamp (`occurredAt`). `raw` may contain personal data and provider metadata; avoid logging it without review. Unknown provider event names map to `type: 'other'` and retain their original `eventType`.
+Each event includes `provider`, provider `eventType`, a normalized `type`, and the original provider payload in `raw`. When available, it also includes `eventId` (a genuine provider event ID), `messageId`, `recipient`, and `occurredAt`. Resend/SNS events also carry an authenticated `deliveryId`. Resend preserves all recipients in `recipients` while retaining the first in `recipient` and still returning one event. SES returns one event per recipient and preserves complaint/delay timestamps.
+
+`id` remains a legacy identifier for compatibility: Brevo/Postmark can fall back to the message ID. Do not assume it is unique across different events for the same email. `raw` may contain personal data and provider metadata; avoid logging it without review. Unknown provider event names map to `type: 'other'` and retain their original `eventType`.
 
 Normalized types are `accepted`, `delivered`, `bounced`, `complained`, `delayed`, `opened`, `clicked`, `unsubscribed`, `rejected`, `failed`, and `other`.
 
 ## Delivery, retries, and deduplication
 
-Providers retry webhook delivery. `verifyWebhook()` verifies authenticity but does not prevent the same authentic event from being processed twice. Persist event IDs (or a stable provider/message/event key when the provider has no event ID) with a unique constraint before applying side effects. Acknowledge only after durable acceptance by your application. Do not log secrets or full event payloads by default.
+Providers retry webhook delivery. `verifyWebhook()` verifies authenticity but does not prevent the same authentic event from being processed twice. Persist complete notifications by `(provider, deliveryId)` where available, or use genuine provider `eventId` values and a provider-specific fallback when absent. SES recipient events share one notification ID; do not discard siblings by deduplicating each with that ID alone. Use a unique constraint before applying side effects. See [durable inbox/outbox examples](reliability.md). Acknowledge only after durable acceptance by your application. Do not log secrets or full event payloads by default.
 
 ## Provider references
 
