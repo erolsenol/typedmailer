@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import type { MailAddress } from './types.js';
 
+const headerValueSchema = z
+  .string()
+  .refine((value) => !/[\r\n\0]/.test(value), 'Header values cannot contain line breaks or NUL.');
+const headerNameSchema = z.string().regex(/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/, 'Use a valid header field name.');
+
 const emailSchema = z.string().email();
 const addressObjectSchema = z
   .object({
@@ -29,24 +34,26 @@ export const mailInputSchema = z
     subject: z
       .string()
       .min(1)
-      .refine((value) => value.trim().length > 0, 'Subject cannot be blank.'),
-    messageId: z.string().min(1).optional(),
+      .refine((value) => value.trim().length > 0, 'Subject cannot be blank.')
+      .refine((value) => !/[\r\n\0]/.test(value), 'Subject cannot contain line breaks or NUL.'),
+    messageId: headerValueSchema.min(1).optional(),
     text: z.string().optional(),
     html: z.string().optional(),
     replyTo: addressSchema.optional(),
     cc: z.union([addressSchema, z.array(addressSchema)]).optional(),
     bcc: z.union([addressSchema, z.array(addressSchema)]).optional(),
-    headers: z.record(z.string(), z.string()).optional(),
+    headers: z.record(headerNameSchema, headerValueSchema).optional(),
     attachments: z
       .array(
         z.object({
           filename: z
             .string()
             .min(1)
-            .refine((value) => value.trim().length > 0, 'Attachment filename cannot be blank.'),
+            .refine((value) => value.trim().length > 0, 'Attachment filename cannot be blank.')
+            .refine((value) => !/[\r\n\0]/.test(value), 'Attachment filename cannot contain line breaks or NUL.'),
           content: z.union([z.string(), z.instanceof(Uint8Array)]),
-          contentType: z.string().min(1).optional(),
-          contentId: z.string().min(1).optional(),
+          contentType: headerValueSchema.min(1).optional(),
+          contentId: headerValueSchema.min(1).optional(),
         }),
       )
       .optional(),

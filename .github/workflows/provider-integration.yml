@@ -20,7 +20,7 @@ jobs:
     environment: provider-smoke
     services:
       mailpit:
-        image: ghcr.io/axllent/mailpit:v1.31.3@sha256:13de4ffbd28f3089be6dff32afbc8210edb5a593d738fa877ae7272cc73aeb67
+        image: docker.io/axllent/mailpit:v1.31.3@sha256:13de4ffbd28f3089be6dff32afbc8210edb5a593d738fa877ae7272cc73aeb67
         ports:
           - 1025:1025
           - 8025:8025

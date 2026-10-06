@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 2.1.1 - 2026-10-06
+
+- Reject line breaks and NUL in subjects, message IDs, attachment metadata and custom email headers while allowing Unicode subjects and multiline bodies.
+- Update the vulnerable source-map dependency and use the public Mailpit container registry for CI.
+
 ## 2.1.0 - 2026-10-04
 
 - Preserve authenticated Resend/SNS webhook `deliveryId`, genuine provider `eventId`, and all Resend `recipients` without changing event cardinality or legacy identifiers.
