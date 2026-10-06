@@ -85,3 +85,34 @@ describe('mail input configuration', () => {
     });
   });
 });
+
+describe('header boundary validation', () => {
+  const message = { to: 'reader@example.com', subject: 'Welcome', text: 'Hello' };
+  it.each(['\r', '\n', '\0'])('rejects control character %j in header fields', (control) => {
+    for (const field of ['subject', 'messageId'])
+      expect(mailInputSchema.safeParse({ ...message, [field]: `value${control}injected` }).success).toBe(false);
+    expect(mailInputSchema.safeParse({ ...message, headers: { 'X-Custom': `value${control}injected` } }).success).toBe(
+      false,
+    );
+    for (const field of ['filename', 'contentType', 'contentId'])
+      expect(
+        mailInputSchema.safeParse({
+          ...message,
+          attachments: [{ filename: 'file.txt', content: 'body', [field]: `value${control}injected` }],
+        }).success,
+      ).toBe(false);
+  });
+  it.each(['', 'X Bad', 'X:Bad', 'X\rInjected'])('rejects malformed header name %j', (name) => {
+    expect(mailInputSchema.safeParse({ ...message, headers: { [name]: 'value' } }).success).toBe(false);
+  });
+  it('accepts Unicode subjects, ordinary custom headers and multiline message bodies', () => {
+    expect(
+      mailInputSchema.safeParse({
+        ...message,
+        subject: 'Hoş geldiniz — 你好',
+        text: 'Line 1\nLine 2',
+        headers: { 'X-Correlation-ID': 'request-1' },
+      }).success,
+    ).toBe(true);
+  });
+});
